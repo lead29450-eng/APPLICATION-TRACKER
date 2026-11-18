@@ -198,6 +198,87 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_lgh1qa3QVGF4k9MTFL8gYA_ob_Gx182
       });
 
     }
+    async function saveApplication(event) {
+  event.preventDefault();
+
+  const { data: { user }, error: userError } =
+    await supabaseClient.auth.getUser();
+
+  if (userError || !user) {
+    document.getElementById("applicationMessage").textContent =
+      "Please log in again.";
+    return;
+  }
+
+  const application = {
+    user_id: user.id,
+    company_name: document.getElementById("company_name").value,
+    job_title: document.getElementById("job_title").value,
+    vacancy_reference: document.getElementById("vacancy_reference").value || null,
+    date_applied: document.getElementById("date_applied").value || null,
+    closing_date: document.getElementById("closing_date").value || null,
+    status: document.getElementById("status").value,
+    notes: document.getElementById("notes").value || null
+  };
+
+  const { error } = await supabaseClient
+    .from("applications")
+    .insert([application]);
+
+  if (error) {
+    document.getElementById("applicationMessage").textContent =
+      error.message;
+    return;
+  }
+
+  document.getElementById("applicationMessage").textContent =
+    "Application saved successfully!";
+
+  document.getElementById("applicationForm").reset();
+
+  loadApplications();
+}
+
+async function loadApplications() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) return;
+
+  const { data, error } = await supabaseClient
+    .from("applications")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const list = document.getElementById("applicationsList");
+  list.replaceChildren();
+
+  if (error) {
+    list.textContent = error.message;
+    return;
+  }
+
+  if (!data.length) {
+    list.textContent = "No applications saved yet.";
+    return;
+  }
+
+  data.forEach(app => {
+    const card = document.createElement("div");
+    const title = document.createElement("h4");
+    const company = document.createElement("p");
+    const status = document.createElement("p");
+    const closing = document.createElement("p");
+
+    title.textContent = app.job_title;
+    company.textContent = "Company: " + app.company_name;
+    status.textContent = "Status: " + app.status;
+    closing.textContent = "Closing date: " + (app.closing_date || "Not provided");
+
+    card.append(title, company, status, closing);
+    list.appendChild(card);
+  });
+}
   </script>
 </body>
 </html>
