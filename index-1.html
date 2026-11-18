@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 24px 16px;
+      color: #172b4d;
+    }
+    .container {
+      max-width: 440px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 26px;
+      border-radius: 14px;
+      box-shadow: 0 3px 14px rgba(0,0,0,.10);
+    }
+    h1 { color: #173b68; margin-top: 0; }
+    input, button {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      margin: 10px 0;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+    input { border: 1px solid #b8c2cc; }
+    button {
+      background: #173b68;
+      color: #fff;
+      border: 0;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; }
+    #message { color: #a12622; overflow-wrap: anywhere; }
+    #dashboard { display: none; }
+    .hint { color: #536477; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Application Tracker</h1>
+    <p class="hint">Never Lose Track of Your Applications.</p>
+
+    <section id="auth">
+      <h2>Welcome</h2>
+      <label for="email">Email address</label>
+      <input type="email" id="email" autocomplete="email" placeholder="you@example.com">
+      <label for="password">Password</label>
+      <input type="password" id="password" autocomplete="current-password" placeholder="At least 6 characters">
+      <button id="signupButton" type="button" onclick="signUp()">Create Account</button>
+      <button id="loginButton" type="button" onclick="logIn()">Log In</button>
+      <p id="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="dashboard">
+      <h2>You're logged in!</h2>
+      <p>Your Application Tracker account is connected.</p>
+      <p class="hint">Next, we'll add the feature to save and manage job applications.</p>
+      <button type="button" onclick="logOut()">Log Out</button>
+    </section>
+  </main>
+
+  <script>
+    // Replace BOTH placeholders below with your Supabase Project URL
+    // and Supabase Publishable key. Never use a Secret/Service Role key here.
+    const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+    const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+
+    let supabaseClient = null;
+    const message = document.getElementById("message");
+    const authSection = document.getElementById("auth");
+    const dashboardSection = document.getElementById("dashboard");
+
+    function showDashboard() {
+      authSection.style.display = "none";
+      dashboardSection.style.display = "block";
+    }
+
+    function showLogin() {
+      authSection.style.display = "block";
+      dashboardSection.style.display = "none";
+    }
+
+    function setBusy(busy) {
+      document.getElementById("signupButton").disabled = busy;
+      document.getElementById("loginButton").disabled = busy;
+    }
+
+    async function signUp() {
+      message.textContent = "";
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        message.textContent = "Please enter your email address and password.";
+        return;
+      }
+      if (password.length < 6) {
+        message.textContent = "Your password must be at least 6 characters.";
+        return;
+      }
+
+      setBusy(true);
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      setBusy(false);
+
+      if (error) {
+        message.textContent = error.message;
+      } else if (data.session) {
+        showDashboard();
+      } else {
+        message.textContent = "Account created. Check your email for a confirmation link, then log in.";
+      }
+    }
+
+    async function logIn() {
+      message.textContent = "";
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        message.textContent = "Please enter your email address and password.";
+        return;
+      }
+
+      setBusy(true);
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      setBusy(false);
+
+      if (error) {
+        message.textContent = error.message;
+      } else {
+        showDashboard();
+      }
+    }
+
+    async function logOut() {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) {
+        message.textContent = error.message;
+      } else {
+        message.textContent = "You have logged out.";
+        showLogin();
+      }
+    }
+
+    if (
+      SUPABASE_URL.includes("PASTE_YOUR") ||
+      SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR")
+    ) {
+      message.textContent = "Setup needed: add your Supabase Project URL and Publishable key in this file.";
+    } else {
+      supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+
+      supabaseClient.auth.getSession().then(({ data, error }) => {
+        if (error) {
+          message.textContent = error.message;
+        } else if (data.session) {
+          showDashboard();
+        }
+      });
+
+    }
+  </script>
+</body>
+</html>
