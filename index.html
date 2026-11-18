@@ -106,8 +106,9 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_lgh1qa3QVGF4k9MTFL8gYA_ob_Gx182
     const dashboardSection = document.getElementById("dashboard");
 
     function showDashboard() {
-      authSection.style.display = "none";
-      dashboardSection.style.display = "block";
+  authSection.style.display = "none";
+  dashboardSection.style.display = "block";
+  loadApplications();
     }
 
     function showLogin() {
