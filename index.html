@@ -4,202 +4,476 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Application Tracker</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+:root {
+  --primary: #2457d6;
+  --dark: #172554;
+  --light: #f4f7fc;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --white: #ffffff;
+}
+
 * { box-sizing: border-box; }
 
 body {
-  font-family: Arial, sans-serif;
-  background: #f1f5f9;
   margin: 0;
-  padding: 24px 16px;
-  color: #172b4d;
+  font-family: Arial, sans-serif;
+  background: var(--light);
+  color: #1e293b;
 }
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+.topbar {
+  background: #fff;
+  padding: 18px 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--dark);
+}
+
+.brand span { color: var(--primary); }
 
 .container {
-  max-width: 550px;
-  margin: 30px auto;
-  background: white;
-  padding: 24px;
-  border-radius: 14px;
-  box-shadow: 0 3px 14px rgba(0,0,0,.10);
+  max-width: 1150px;
+  margin: 35px auto;
+  padding: 0 20px;
 }
 
-h1, h2, h3 { color: #173b68; }
-
-input, select, textarea, button {
-  display: block;
-  width: 100%;
-  padding: 13px;
-  margin: 10px 0;
-  border-radius: 7px;
-  font-size: 16px;
-}
-
-input, select, textarea {
-  border: 1px solid #b8c2cc;
-  background: white;
-}
-
-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-button {
-  background: #173b68;
+.hero {
+  background: linear-gradient(120deg, #173b83, #3977ed);
   color: white;
-  border: 0;
-  font-weight: bold;
-  cursor: pointer;
+  padding: 35px;
+  border-radius: 18px;
+  margin-bottom: 28px;
+  box-shadow: 0 8px 25px rgba(36,87,214,.18);
 }
 
-button:disabled { opacity: .6; }
+.hero h1 {
+  margin: 0 0 10px;
+  font-size: 30px;
+}
+
+.hero p {
+  margin: 0;
+  opacity: .9;
+  line-height: 1.6;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+  margin-bottom: 28px;
+}
+
+.stat {
+  background: white;
+  padding: 20px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  box-shadow: 0 3px 10px rgba(0,0,0,.03);
+}
+
+.stat small {
+  color: var(--muted);
+  display: block;
+  margin-bottom: 10px;
+}
+
+.stat strong {
+  font-size: 28px;
+  color: var(--dark);
+}
+
+.panel {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  margin-bottom: 25px;
+  border: 1px solid var(--border);
+  box-shadow: 0 3px 12px rgba(0,0,0,.035);
+}
+
+.panel h2 {
+  margin-top: 0;
+  color: var(--dark);
+}
 
 label {
   display: block;
-  margin-top: 14px;
-  font-weight: bold;
+  font-weight: 700;
+  margin: 15px 0 7px;
+  font-size: 14px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #1e293b;
+}
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(36,87,214,.1);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;
+}
+
+.btn {
+  border: none;
+  padding: 13px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: .2s;
+}
+
+.btn:hover { opacity: .88; }
+
+.primary {
+  background: var(--primary);
+  color: white;
+}
+
+.secondary {
+  background: #e8eefc;
+  color: var(--primary);
+}
+
+.danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.logout {
+  background: #fff0f0;
+  color: #b91c1c;
+  padding: 10px 15px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+#cancelEdit { display: none; }
+
+.search {
+  margin-bottom: 20px;
+}
+
+.application-card {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 20px;
+  margin-bottom: 16px;
+  background: white;
+  transition: .2s;
+}
+
+.application-card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  transform: translateY(-2px);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.application-card h3 {
+  margin: 0 0 8px;
+  color: var(--dark);
+  font-size: 19px;
+}
+
+.company {
+  color: var(--muted);
+  margin: 0 0 15px;
+}
+
+.badge {
+  padding: 7px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.Applied { background: #dbeafe; color: #1d4ed8; }
+.Shortlisted { background: #ede9fe; color: #6d28d9; }
+.Interview { background: #fef3c7; color: #92400e; }
+.Rejected { background: #fee2e2; color: #b91c1c; }
+.Offered { background: #dcfce7; color: #15803d; }
+
+.details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 15px 0;
+}
+
+.detail {
+  background: #f8fafc;
+  padding: 11px;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.detail small {
+  color: var(--muted);
+  display: block;
+  margin-bottom: 5px;
+}
+
+.description {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.countdown {
+  font-weight: 700;
+  color: #15803d;
+}
+
+.countdown.closed { color: #b91c1c; }
+.countdown.today { color: #b45309; }
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.card-actions button {
+  flex: 1;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 35px 10px;
+}
+
+#auth {
+  max-width: 430px;
+  margin: 70px auto;
+}
+
+#auth .panel { padding: 30px; }
+
+#auth h1 {
+  color: var(--dark);
+  text-align: center;
+}
+
+#message, #applicationMessage {
+  overflow-wrap: anywhere;
+  line-height: 1.5;
 }
 
 #dashboard { display: none; }
 
-#message, #applicationMessage {
-  overflow-wrap: anywhere;
+@media(max-width: 800px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:last-child { grid-column: span 2; }
 }
 
-.application-card {
-  border: 1px solid #d5dce5;
-  padding: 15px;
-  margin: 14px 0;
-  border-radius: 9px;
-}
-
-.application-card h4 {
-  margin-top: 0;
-  color: #173b68;
-  font-size: 18px;
-}
-
-.description-text {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  background: #f8fafc;
-  padding: 10px;
-  border-radius: 6px;
-}
-
-.logout-button {
-  background: #9b2929;
+@media(max-width: 550px) {
+  .container { margin: 20px auto; }
+  .hero { padding: 25px; }
+  .hero h1 { font-size: 24px; }
+  .form-grid, .details { grid-template-columns: 1fr; }
+  .panel { padding: 18px; }
+  .topbar { padding: 15px 18px; }
+  .brand { font-size: 19px; }
+  .card-actions { flex-direction: column; }
 }
 </style>
 </head>
 
 <body>
 
-<main class="container">
-
-<h1>Application Tracker</h1>
+<header class="topbar">
+  <div class="brand">Application<span>Tracker</span></div>
+  <button id="logoutButton" class="btn logout"
+    style="display:none" onclick="logOut()">Log Out</button>
+</header>
 
 <section id="auth">
+  <div class="panel">
+    <h1>Welcome Back</h1>
+    <p style="text-align:center;color:#64748b">
+      Manage your job applications in one place.
+    </p>
 
-<h2>Welcome</h2>
+    <label>Email Address</label>
+    <input type="email" id="email" placeholder="you@example.com">
 
-<label for="email">Email Address</label>
-<input type="email" id="email" autocomplete="email"
-placeholder="you@example.com">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Your password">
 
-<label for="password">Password</label>
-<input type="password" id="password"
-autocomplete="current-password"
-placeholder="At least 6 characters">
+    <button class="btn primary" style="width:100%;margin-top:20px"
+      id="loginButton" onclick="logIn()">Log In</button>
 
-<button id="signupButton" type="button" onclick="signUp()">
-Create Account
-</button>
+    <button class="btn secondary" style="width:100%;margin-top:10px"
+      id="signupButton" onclick="signUp()">Create Account</button>
 
-<button id="loginButton" type="button" onclick="logIn()">
-Log In
-</button>
-
-<p id="message" role="status" aria-live="polite"></p>
-
+    <p id="message" role="status"></p>
+  </div>
 </section>
 
-<section id="dashboard">
+<main id="dashboard">
+<div class="container">
 
-<h2>My Job Applications</h2>
+  <section class="hero">
+    <h1>My Job Applications</h1>
+    <p>Stay organised, track your progress and never miss an opportunity.</p>
+  </section>
 
-<p>Keep track of all your job applications in one place.</p>
+  <section class="stats">
+    <div class="stat">
+      <small>Total Applications</small>
+      <strong id="totalCount">0</strong>
+    </div>
+    <div class="stat">
+      <small>Applied</small>
+      <strong id="appliedCount">0</strong>
+    </div>
+    <div class="stat">
+      <small>Shortlisted</small>
+      <strong id="shortlistedCount">0</strong>
+    </div>
+    <div class="stat">
+      <small>Interviews</small>
+      <strong id="interviewCount">0</strong>
+    </div>
+    <div class="stat">
+      <small>Offers</small>
+      <strong id="offeredCount">0</strong>
+    </div>
+  </section>
 
-<h3>Add New Application</h3>
+  <section class="panel" id="formPanel">
+    <h2 id="formHeading">＋ Add New Application</h2>
 
-<form id="applicationForm" onsubmit="saveApplication(event)">
+    <form id="applicationForm" onsubmit="saveApplication(event)">
 
-<label for="company_name">Company Name</label>
-<input type="text" id="company_name" required>
+      <div class="form-grid">
+        <div>
+          <label>Company Name *</label>
+          <input id="company_name" required>
+        </div>
 
-<label for="job_title">Job Title</label>
-<input type="text" id="job_title" required>
+        <div>
+          <label>Job Title *</label>
+          <input id="job_title" required>
+        </div>
 
-<label for="vacancy_reference">Vacancy Reference</label>
-<input type="text" id="vacancy_reference">
+        <div>
+          <label>Vacancy Reference</label>
+          <input id="vacancy_reference">
+        </div>
 
-<label for="circular_number">Circular Number</label>
-<input type="text" id="circular_number"
-placeholder="e.g. DPSA Vacancy Circular 45 of 2026">
+        <div>
+          <label>Circular Number</label>
+          <input id="circular_number"
+            placeholder="e.g. DPSA Circular 45 of 2026">
+        </div>
 
-<label for="job_description">Job Description</label>
-<textarea id="job_description"
-placeholder="Paste the full job advertisement, duties and requirements here..."></textarea>
+        <div>
+          <label>Date Applied</label>
+          <input type="date" id="date_applied">
+        </div>
 
-<label for="date_applied">Date Applied</label>
-<input type="date" id="date_applied">
+        <div>
+          <label>Closing Date</label>
+          <input type="date" id="closing_date">
+        </div>
 
-<label for="closing_date">Closing Date</label>
-<input type="date" id="closing_date">
+        <div>
+          <label>Application Status</label>
+          <select id="status">
+            <option value="Applied">Applied</option>
+            <option value="Shortlisted">Shortlisted</option>
+            <option value="Interview">Interview</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Offered">Offered</option>
+          </select>
+        </div>
+      </div>
 
-<label for="status">Application Status</label>
+      <label>Job Description</label>
+      <textarea id="job_description"
+        placeholder="Paste the job advertisement, duties and requirements here..."></textarea>
 
-<select id="status" required>
-<option value="Applied">Applied</option>
-<option value="Shortlisted">Shortlisted</option>
-<option value="Interview">Interview</option>
-<option value="Rejected">Rejected</option>
-<option value="Offered">Offered</option>
-</select>
+      <label>Notes</label>
+      <textarea id="notes"
+        placeholder="Add reminders, feedback or other notes..."></textarea>
 
-<label for="notes">Notes</label>
-<textarea id="notes" placeholder="Add your notes here..."></textarea>
+      <div class="form-actions">
+        <button type="submit" class="btn primary" id="saveButton">
+          Save Application
+        </button>
+        <button type="button" class="btn secondary"
+          id="cancelEdit" onclick="cancelEditing()">Cancel</button>
+      </div>
 
-<button id="saveButton" type="submit">
-Save Application
-</button>
+    </form>
 
-</form>
+    <p id="applicationMessage" role="status"></p>
+  </section>
 
-<p id="applicationMessage" role="status" aria-live="polite"></p>
+  <section class="panel">
+    <h2>My Saved Applications</h2>
 
-<h3>My Saved Applications</h3>
+    <input class="search" id="searchInput"
+      placeholder="🔍 Search by company, job title or reference..."
+      oninput="renderApplications()">
 
-<div id="applicationsList">
-No applications saved yet.
+    <div id="applicationsList">
+      <p class="empty">Loading applications...</p>
+    </div>
+  </section>
+
 </div>
-
-<button type="button" class="logout-button" onclick="logOut()">
-Log Out
-</button>
-
-</section>
-
 </main>
 
 <script>
-
-// SUPABASE CONNECTION
-
 const SUPABASE_URL =
 "https://immcicsxrfpgfbtkwacc.supabase.co";
 
@@ -207,258 +481,255 @@ const SUPABASE_PUBLISHABLE_KEY =
 "sb_publishable_lgh1qa3QVGF4k9MTFL8gYA_ob_Gx182";
 
 const supabaseClient = window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLISHABLE_KEY
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
 );
 
+let applications = [];
+let editingId = null;
 
-// PAGE ELEMENTS
-
-const message = document.getElementById("message");
-
-const authSection = document.getElementById("auth");
-
-const dashboardSection =
-document.getElementById("dashboard");
-
-
-// SHOW DASHBOARD
+const $ = id => document.getElementById(id);
 
 function showDashboard() {
-  authSection.style.display = "none";
-  dashboardSection.style.display = "block";
+  $("auth").style.display = "none";
+  $("dashboard").style.display = "block";
+  $("logoutButton").style.display = "block";
   loadApplications();
 }
 
-
-// SHOW LOGIN
-
 function showLogin() {
-  authSection.style.display = "block";
-  dashboardSection.style.display = "none";
+  $("auth").style.display = "block";
+  $("dashboard").style.display = "none";
+  $("logoutButton").style.display = "none";
 }
 
-
-// BUTTON LOADING
-
-function setBusy(busy) {
-  document.getElementById("signupButton").disabled = busy;
-  document.getElementById("loginButton").disabled = busy;
+function setAuthBusy(busy) {
+  $("loginButton").disabled = busy;
+  $("signupButton").disabled = busy;
 }
-
-
-// CREATE ACCOUNT
 
 async function signUp() {
+  $("message").textContent = "";
 
-  message.textContent = "";
-
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
+  const email = $("email").value.trim();
+  const password = $("password").value;
 
   if (!email || !password) {
-    message.textContent =
+    $("message").textContent =
       "Please enter your email address and password.";
     return;
   }
 
   if (password.length < 6) {
-    message.textContent =
-      "Your password must be at least 6 characters.";
+    $("message").textContent =
+      "Password must contain at least 6 characters.";
     return;
   }
 
-  setBusy(true);
+  setAuthBusy(true);
 
   try {
-
     const { data, error } =
-      await supabaseClient.auth.signUp({
-        email,
-        password
-      });
+      await supabaseClient.auth.signUp({ email, password });
 
     if (error) throw error;
 
     if (data.session) {
       showDashboard();
     } else {
-      message.textContent =
+      $("message").textContent =
         "Account created. Check your email for confirmation, then log in.";
     }
-
   } catch (error) {
-    message.textContent = error.message;
+    $("message").textContent = error.message;
   } finally {
-    setBusy(false);
+    setAuthBusy(false);
   }
 }
 
-
-// LOG IN
-
 async function logIn() {
+  $("message").textContent = "";
 
-  message.textContent = "";
-
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
+  const email = $("email").value.trim();
+  const password = $("password").value;
 
   if (!email || !password) {
-    message.textContent =
+    $("message").textContent =
       "Please enter your email address and password.";
     return;
   }
 
-  setBusy(true);
+  setAuthBusy(true);
 
   try {
-
     const { error } =
       await supabaseClient.auth.signInWithPassword({
-        email,
-        password
+        email, password
       });
 
     if (error) throw error;
 
     showDashboard();
-
   } catch (error) {
-    message.textContent = error.message;
+    $("message").textContent = error.message;
   } finally {
-    setBusy(false);
+    setAuthBusy(false);
   }
 }
 
-
-// LOG OUT
-
 async function logOut() {
-
-  const { error } =
-    await supabaseClient.auth.signOut();
+  const { error } = await supabaseClient.auth.signOut();
 
   if (error) {
-    document.getElementById("applicationMessage").textContent =
-      error.message;
+    $("applicationMessage").textContent = error.message;
     return;
   }
 
-  message.textContent = "You have logged out.";
   showLogin();
 }
 
+async function getCurrentUser() {
+  const { data, error } = await supabaseClient.auth.getUser();
 
-// SAVE APPLICATION
+  if (error) throw error;
+  if (!data.user) throw new Error("Please log in again.");
+
+  return data.user;
+}
+
+function getFormData(userId) {
+  return {
+    user_id: userId,
+    company_name: $("company_name").value.trim(),
+    job_title: $("job_title").value.trim(),
+    vacancy_reference: $("vacancy_reference").value.trim() || null,
+    circular_number: $("circular_number").value.trim() || null,
+    job_description: $("job_description").value.trim() || null,
+    date_applied: $("date_applied").value || null,
+    closing_date: $("closing_date").value || null,
+    status: $("status").value,
+    notes: $("notes").value.trim() || null
+  };
+}
 
 async function saveApplication(event) {
-
   event.preventDefault();
 
-  const applicationMessage =
-    document.getElementById("applicationMessage");
+  const button = $("saveButton");
+  const message = $("applicationMessage");
 
-  const saveButton =
-    document.getElementById("saveButton");
-
-  applicationMessage.textContent = "";
-  saveButton.disabled = true;
+  button.disabled = true;
+  message.textContent = "Saving...";
 
   try {
+    const user = await getCurrentUser();
+    const application = getFormData(user.id);
 
-    const {
-      data: { user },
-      error: userError
-    } = await supabaseClient.auth.getUser();
+    let result;
 
-    if (userError) throw userError;
-
-    if (!user) {
-      throw new Error("Please log in again.");
+    if (editingId) {
+      result = await supabaseClient
+        .from("applications")
+        .update(application)
+        .eq("id", editingId)
+        .eq("user_id", user.id);
+    } else {
+      result = await supabaseClient
+        .from("applications")
+        .insert([application]);
     }
 
-    const application = {
+    if (result.error) throw result.error;
 
-      user_id: user.id,
+    message.textContent = editingId
+      ? "Application updated successfully!"
+      : "Application saved successfully!";
 
-      company_name:
-        document.getElementById("company_name").value.trim(),
+    resetForm();
+    await loadApplications();
 
-      job_title:
-        document.getElementById("job_title").value.trim(),
+  } catch (error) {
+    message.textContent = "Error: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
 
-      vacancy_reference:
-        document.getElementById("vacancy_reference").value.trim() || null,
+function resetForm() {
+  $("applicationForm").reset();
+  editingId = null;
+  $("formHeading").textContent = "＋ Add New Application";
+  $("saveButton").textContent = "Save Application";
+  $("cancelEdit").style.display = "none";
+}
 
-      circular_number:
-        document.getElementById("circular_number").value.trim() || null,
+function cancelEditing() {
+  resetForm();
+  $("applicationMessage").textContent = "Editing cancelled.";
+}
 
-      job_description:
-        document.getElementById("job_description").value.trim() || null,
+function editApplication(id) {
+  const app = applications.find(item => item.id === id);
+  if (!app) return;
 
-      date_applied:
-        document.getElementById("date_applied").value || null,
+  editingId = id;
 
-      closing_date:
-        document.getElementById("closing_date").value || null,
+  $("company_name").value = app.company_name || "";
+  $("job_title").value = app.job_title || "";
+  $("vacancy_reference").value = app.vacancy_reference || "";
+  $("circular_number").value = app.circular_number || "";
+  $("job_description").value = app.job_description || "";
+  $("date_applied").value = app.date_applied || "";
+  $("closing_date").value = app.closing_date || "";
+  $("status").value = app.status || "Applied";
+  $("notes").value = app.notes || "";
 
-      status:
-        document.getElementById("status").value,
+  $("formHeading").textContent = "✏️ Edit Application";
+  $("saveButton").textContent = "Update Application";
+  $("cancelEdit").style.display = "inline-block";
 
-      notes:
-        document.getElementById("notes").value.trim() || null
+  $("applicationMessage").textContent =
+    "You are editing: " + app.job_title;
 
-    };
+  $("formPanel").scrollIntoView({ behavior: "smooth" });
+}
+
+async function deleteApplication(id) {
+  const app = applications.find(item => item.id === id);
+  if (!app) return;
+
+  if (!confirm("Delete this application: " + app.job_title + "?")) {
+    return;
+  }
+
+  try {
+    const user = await getCurrentUser();
 
     const { error } = await supabaseClient
       .from("applications")
-      .insert([application]);
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
 
     if (error) throw error;
 
-    applicationMessage.textContent =
-      "Application saved successfully!";
-
-    document.getElementById("applicationForm").reset();
+    $("applicationMessage").textContent =
+      "Application deleted.";
 
     await loadApplications();
 
   } catch (error) {
-
-    applicationMessage.textContent =
+    $("applicationMessage").textContent =
       "Error: " + error.message;
-
-  } finally {
-
-    saveButton.disabled = false;
-
   }
 }
 
-
-// LOAD APPLICATIONS
-
 async function loadApplications() {
-
-  const list =
-    document.getElementById("applicationsList");
-
+  const list = $("applicationsList");
   list.textContent = "Loading applications...";
 
   try {
-
-    const {
-      data: { user },
-      error: userError
-    } = await supabaseClient.auth.getUser();
-
-    if (userError) throw userError;
-
-    if (!user) {
-      list.textContent = "Please log in.";
-      return;
-    }
+    const user = await getCurrentUser();
 
     const { data, error } = await supabaseClient
       .from("applications")
@@ -468,98 +739,208 @@ async function loadApplications() {
 
     if (error) throw error;
 
-    list.replaceChildren();
-
-    if (!data || data.length === 0) {
-      list.textContent = "No applications saved yet.";
-      return;
-    }
-
-    data.forEach(app => {
-
-      const card = document.createElement("div");
-      card.className = "application-card";
-
-      const title = document.createElement("h4");
-      const company = document.createElement("p");
-      const reference = document.createElement("p");
-      const circular = document.createElement("p");
-      const descriptionHeading = document.createElement("p");
-      const description = document.createElement("p");
-      const dateApplied = document.createElement("p");
-      const status = document.createElement("p");
-      const closing = document.createElement("p");
-      const notes = document.createElement("p");
-
-      title.textContent = app.job_title;
-
-      company.textContent =
-        "Company: " + app.company_name;
-
-      reference.textContent =
-        "Reference: " + (app.vacancy_reference || "Not provided");
-
-      circular.textContent =
-        "Circular Number: " + (app.circular_number || "Not provided");
-
-      descriptionHeading.textContent =
-        "Job Description:";
-
-      description.className = "description-text";
-
-      description.textContent =
-        app.job_description || "Not provided";
-
-      dateApplied.textContent =
-        "Date applied: " + (app.date_applied || "Not provided");
-
-      status.textContent =
-        "Status: " + app.status;
-
-      closing.textContent =
-        "Closing date: " + (app.closing_date || "Not provided");
-
-      notes.textContent =
-        "Notes: " + (app.notes || "None");
-
-      card.append(
-        title,
-        company,
-        reference,
-        circular,
-        descriptionHeading,
-        description,
-        dateApplied,
-        status,
-        closing,
-        notes
-      );
-
-      list.appendChild(card);
-
-    });
+    applications = data || [];
+    updateStats();
+    renderApplications();
 
   } catch (error) {
-
     list.textContent =
       "Unable to load applications: " + error.message;
-
   }
 }
 
+function updateStats() {
+  $("totalCount").textContent = applications.length;
 
-// CHECK EXISTING SESSION
+  $("appliedCount").textContent =
+    applications.filter(a => a.status === "Applied").length;
+
+  $("shortlistedCount").textContent =
+    applications.filter(a => a.status === "Shortlisted").length;
+
+  $("interviewCount").textContent =
+    applications.filter(a => a.status === "Interview").length;
+
+  $("offeredCount").textContent =
+    applications.filter(a => a.status === "Offered").length;
+}
+
+function closingMessage(date) {
+  if (!date) return "Closing date not provided";
+
+  const parts = date.split("-").map(Number);
+  const closing = Date.UTC(parts[0], parts[1] - 1, parts[2]);
+  const todayDate = new Date();
+  const today = Date.UTC(
+    todayDate.getFullYear(),
+    todayDate.getMonth(),
+    todayDate.getDate()
+  );
+
+  const days = Math.round((closing - today) / 86400000);
+
+  if (days < 0) {
+    return {
+      text: "Closed " + Math.abs(days) + " day(s) ago",
+      className: "closed"
+    };
+  }
+
+  if (days === 0) {
+    return { text: "Closes today!", className: "today" };
+  }
+
+  return {
+    text: days + " day(s) remaining",
+    className: ""
+  };
+}
+
+function addDetail(parent, label, value) {
+  const box = document.createElement("div");
+  box.className = "detail";
+
+  const small = document.createElement("small");
+  small.textContent = label;
+
+  const strong = document.createElement("strong");
+  strong.textContent = value || "Not provided";
+
+  box.append(small, strong);
+  parent.appendChild(box);
+}
+
+function renderApplications() {
+  const list = $("applicationsList");
+  const search = $("searchInput").value.toLowerCase().trim();
+
+  list.replaceChildren();
+
+  const filtered = applications.filter(app => {
+    const text = [
+      app.company_name,
+      app.job_title,
+      app.vacancy_reference,
+      app.circular_number
+    ].join(" ").toLowerCase();
+
+    return text.includes(search);
+  });
+
+  if (filtered.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = applications.length
+      ? "No matching applications found."
+      : "No applications saved yet. Add your first job application above.";
+
+    list.appendChild(empty);
+    return;
+  }
+
+  filtered.forEach(app => {
+    const card = document.createElement("article");
+    card.className = "application-card";
+
+    const top = document.createElement("div");
+    top.className = "card-top";
+
+    const headingArea = document.createElement("div");
+
+    const title = document.createElement("h3");
+    title.textContent = app.job_title;
+
+    const company = document.createElement("p");
+    company.className = "company";
+    company.textContent = app.company_name;
+
+    headingArea.append(title, company);
+
+    const badge = document.createElement("span");
+    badge.className = "badge " + app.status;
+    badge.textContent = app.status;
+
+    top.append(headingArea, badge);
+    card.appendChild(top);
+
+    const details = document.createElement("div");
+    details.className = "details";
+
+    addDetail(details, "Vacancy Reference", app.vacancy_reference);
+    addDetail(details, "Circular Number", app.circular_number);
+    addDetail(details, "Date Applied", app.date_applied);
+
+    const closingBox = document.createElement("div");
+    closingBox.className = "detail";
+
+    const closingLabel = document.createElement("small");
+    closingLabel.textContent = "Closing Date";
+
+    const closingValue = document.createElement("strong");
+    closingValue.textContent = app.closing_date || "Not provided";
+
+    const countdown = document.createElement("div");
+    const result = closingMessage(app.closing_date);
+
+    if (typeof result === "string") {
+      countdown.textContent = result;
+    } else {
+      countdown.textContent = result.text;
+      countdown.className = "countdown " + result.className;
+    }
+
+    closingBox.append(closingLabel, closingValue, countdown);
+    details.appendChild(closingBox);
+
+    card.appendChild(details);
+
+    const descriptionHeading = document.createElement("h4");
+    descriptionHeading.textContent = "Job Description";
+
+    const description = document.createElement("div");
+    description.className = "description";
+    description.textContent = app.job_description || "Not provided";
+
+    const notesHeading = document.createElement("h4");
+    notesHeading.textContent = "Notes";
+
+    const notes = document.createElement("p");
+    notes.textContent = app.notes || "No notes added.";
+
+    card.append(
+      descriptionHeading,
+      description,
+      notesHeading,
+      notes
+    );
+
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
+
+    const edit = document.createElement("button");
+    edit.className = "btn secondary";
+    edit.textContent = "✏️ Edit";
+    edit.onclick = () => editApplication(app.id);
+
+    const remove = document.createElement("button");
+    remove.className = "btn danger";
+    remove.textContent = "🗑 Delete";
+    remove.onclick = () => deleteApplication(app.id);
+
+    actions.append(edit, remove);
+    card.appendChild(actions);
+
+    list.appendChild(card);
+  });
+}
 
 supabaseClient.auth.getSession().then(({ data, error }) => {
-
   if (error) {
-    message.textContent = error.message;
+    $("message").textContent = error.message;
   } else if (data.session) {
     showDashboard();
   }
-
 });
-
 </script>
 
 </body>
