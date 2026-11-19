@@ -19,15 +19,15 @@ body {
 }
 
 .container {
-  max-width: 500px;
-  margin: 40px auto;
+  max-width: 550px;
+  margin: 30px auto;
   background: white;
-  padding: 26px;
+  padding: 24px;
   border-radius: 14px;
   box-shadow: 0 3px 14px rgba(0,0,0,.10);
 }
 
-h1 { color: #173b68; }
+h1, h2, h3 { color: #173b68; }
 
 input, select, textarea, button {
   display: block;
@@ -43,7 +43,10 @@ input, select, textarea {
   background: white;
 }
 
-textarea { min-height: 100px; }
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
 
 button {
   background: #173b68;
@@ -57,32 +60,39 @@ button:disabled { opacity: .6; }
 
 label {
   display: block;
-  margin-top: 12px;
+  margin-top: 14px;
   font-weight: bold;
 }
 
 #dashboard { display: none; }
 
-#message {
-  color: #a12622;
+#message, #applicationMessage {
   overflow-wrap: anywhere;
 }
 
 .application-card {
   border: 1px solid #d5dce5;
-  padding: 14px;
-  margin: 12px 0;
-  border-radius: 8px;
+  padding: 15px;
+  margin: 14px 0;
+  border-radius: 9px;
 }
 
 .application-card h4 {
   margin-top: 0;
   color: #173b68;
+  font-size: 18px;
 }
 
 .description-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.logout-button {
+  background: #9b2929;
 }
 </style>
 </head>
@@ -97,7 +107,7 @@ label {
 
 <h2>Welcome</h2>
 
-<label for="email">Email address</label>
+<label for="email">Email Address</label>
 <input type="email" id="email" autocomplete="email"
 placeholder="you@example.com">
 
@@ -162,19 +172,25 @@ placeholder="Paste the full job advertisement, duties and requirements here...">
 </select>
 
 <label for="notes">Notes</label>
-<textarea id="notes"></textarea>
+<textarea id="notes" placeholder="Add your notes here..."></textarea>
 
-<button type="submit">Save Application</button>
+<button id="saveButton" type="submit">
+Save Application
+</button>
 
 </form>
 
-<p id="applicationMessage"></p>
+<p id="applicationMessage" role="status" aria-live="polite"></p>
 
 <h3>My Saved Applications</h3>
 
-<div id="applicationsList">No applications saved yet.</div>
+<div id="applicationsList">
+No applications saved yet.
+</div>
 
-<button type="button" onclick="logOut()">Log Out</button>
+<button type="button" class="logout-button" onclick="logOut()">
+Log Out
+</button>
 
 </section>
 
@@ -195,6 +211,9 @@ SUPABASE_URL,
 SUPABASE_PUBLISHABLE_KEY
 );
 
+
+// PAGE ELEMENTS
+
 const message = document.getElementById("message");
 
 const authSection = document.getElementById("auth");
@@ -206,25 +225,25 @@ document.getElementById("dashboard");
 // SHOW DASHBOARD
 
 function showDashboard() {
-authSection.style.display = "none";
-dashboardSection.style.display = "block";
-loadApplications();
+  authSection.style.display = "none";
+  dashboardSection.style.display = "block";
+  loadApplications();
 }
 
 
 // SHOW LOGIN
 
 function showLogin() {
-authSection.style.display = "block";
-dashboardSection.style.display = "none";
+  authSection.style.display = "block";
+  dashboardSection.style.display = "none";
 }
 
 
 // BUTTON LOADING
 
 function setBusy(busy) {
-document.getElementById("signupButton").disabled = busy;
-document.getElementById("loginButton").disabled = busy;
+  document.getElementById("signupButton").disabled = busy;
+  document.getElementById("loginButton").disabled = busy;
 }
 
 
@@ -232,10 +251,316 @@ document.getElementById("loginButton").disabled = busy;
 
 async function signUp() {
 
-message.textContent = "";
+  message.textContent = "";
 
-const email = document.getElementById("email").value.trim();
-const password = document.getElementById("password").value;
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
 
-if (!email || !password) {
-message.textContent = "Please
+  if (!email || !password) {
+    message.textContent =
+      "Please enter your email address and password.";
+    return;
+  }
+
+  if (password.length < 6) {
+    message.textContent =
+      "Your password must be at least 6 characters.";
+    return;
+  }
+
+  setBusy(true);
+
+  try {
+
+    const { data, error } =
+      await supabaseClient.auth.signUp({
+        email,
+        password
+      });
+
+    if (error) throw error;
+
+    if (data.session) {
+      showDashboard();
+    } else {
+      message.textContent =
+        "Account created. Check your email for confirmation, then log in.";
+    }
+
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    setBusy(false);
+  }
+}
+
+
+// LOG IN
+
+async function logIn() {
+
+  message.textContent = "";
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    message.textContent =
+      "Please enter your email address and password.";
+    return;
+  }
+
+  setBusy(true);
+
+  try {
+
+    const { error } =
+      await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+    if (error) throw error;
+
+    showDashboard();
+
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    setBusy(false);
+  }
+}
+
+
+// LOG OUT
+
+async function logOut() {
+
+  const { error } =
+    await supabaseClient.auth.signOut();
+
+  if (error) {
+    document.getElementById("applicationMessage").textContent =
+      error.message;
+    return;
+  }
+
+  message.textContent = "You have logged out.";
+  showLogin();
+}
+
+
+// SAVE APPLICATION
+
+async function saveApplication(event) {
+
+  event.preventDefault();
+
+  const applicationMessage =
+    document.getElementById("applicationMessage");
+
+  const saveButton =
+    document.getElementById("saveButton");
+
+  applicationMessage.textContent = "";
+  saveButton.disabled = true;
+
+  try {
+
+    const {
+      data: { user },
+      error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError) throw userError;
+
+    if (!user) {
+      throw new Error("Please log in again.");
+    }
+
+    const application = {
+
+      user_id: user.id,
+
+      company_name:
+        document.getElementById("company_name").value.trim(),
+
+      job_title:
+        document.getElementById("job_title").value.trim(),
+
+      vacancy_reference:
+        document.getElementById("vacancy_reference").value.trim() || null,
+
+      circular_number:
+        document.getElementById("circular_number").value.trim() || null,
+
+      job_description:
+        document.getElementById("job_description").value.trim() || null,
+
+      date_applied:
+        document.getElementById("date_applied").value || null,
+
+      closing_date:
+        document.getElementById("closing_date").value || null,
+
+      status:
+        document.getElementById("status").value,
+
+      notes:
+        document.getElementById("notes").value.trim() || null
+
+    };
+
+    const { error } = await supabaseClient
+      .from("applications")
+      .insert([application]);
+
+    if (error) throw error;
+
+    applicationMessage.textContent =
+      "Application saved successfully!";
+
+    document.getElementById("applicationForm").reset();
+
+    await loadApplications();
+
+  } catch (error) {
+
+    applicationMessage.textContent =
+      "Error: " + error.message;
+
+  } finally {
+
+    saveButton.disabled = false;
+
+  }
+}
+
+
+// LOAD APPLICATIONS
+
+async function loadApplications() {
+
+  const list =
+    document.getElementById("applicationsList");
+
+  list.textContent = "Loading applications...";
+
+  try {
+
+    const {
+      data: { user },
+      error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError) throw userError;
+
+    if (!user) {
+      list.textContent = "Please log in.";
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from("applications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    list.replaceChildren();
+
+    if (!data || data.length === 0) {
+      list.textContent = "No applications saved yet.";
+      return;
+    }
+
+    data.forEach(app => {
+
+      const card = document.createElement("div");
+      card.className = "application-card";
+
+      const title = document.createElement("h4");
+      const company = document.createElement("p");
+      const reference = document.createElement("p");
+      const circular = document.createElement("p");
+      const descriptionHeading = document.createElement("p");
+      const description = document.createElement("p");
+      const dateApplied = document.createElement("p");
+      const status = document.createElement("p");
+      const closing = document.createElement("p");
+      const notes = document.createElement("p");
+
+      title.textContent = app.job_title;
+
+      company.textContent =
+        "Company: " + app.company_name;
+
+      reference.textContent =
+        "Reference: " + (app.vacancy_reference || "Not provided");
+
+      circular.textContent =
+        "Circular Number: " + (app.circular_number || "Not provided");
+
+      descriptionHeading.textContent =
+        "Job Description:";
+
+      description.className = "description-text";
+
+      description.textContent =
+        app.job_description || "Not provided";
+
+      dateApplied.textContent =
+        "Date applied: " + (app.date_applied || "Not provided");
+
+      status.textContent =
+        "Status: " + app.status;
+
+      closing.textContent =
+        "Closing date: " + (app.closing_date || "Not provided");
+
+      notes.textContent =
+        "Notes: " + (app.notes || "None");
+
+      card.append(
+        title,
+        company,
+        reference,
+        circular,
+        descriptionHeading,
+        description,
+        dateApplied,
+        status,
+        closing,
+        notes
+      );
+
+      list.appendChild(card);
+
+    });
+
+  } catch (error) {
+
+    list.textContent =
+      "Unable to load applications: " + error.message;
+
+  }
+}
+
+
+// CHECK EXISTING SESSION
+
+supabaseClient.auth.getSession().then(({ data, error }) => {
+
+  if (error) {
+    message.textContent = error.message;
+  } else if (data.session) {
+    showDashboard();
+  }
+
+});
+
+</script>
+
+</body>
+</html>
