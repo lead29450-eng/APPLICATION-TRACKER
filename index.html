@@ -424,15 +424,17 @@ input:focus, select:focus, textarea:focus {
           <label>Closing Date</label>
           <input type="date" id="closing_date">
         </div>
-<div>
-  <label>Interview Date</label>
-  <input type="date" id="interview_date">
-</div>
 
-<div>
-  <label>Follow-up Date</label>
-  <input type="date" id="follow_up_date">
-    </div>
+        <div>
+          <label>Interview Date</label>
+          <input type="date" id="interview_date">
+        </div>
+
+        <div>
+          <label>Follow-up Date</label>
+          <input type="date" id="follow_up_date">
+        </div>
+
         <div>
           <label>Application Status</label>
           <select id="status">
@@ -615,6 +617,8 @@ function getFormData(userId) {
     job_description: $("job_description").value.trim() || null,
     date_applied: $("date_applied").value || null,
     closing_date: $("closing_date").value || null,
+    interview_date: $("interview_date").value || null,
+    follow_up_date: $("follow_up_date").value || null,
     status: $("status").value,
     notes: $("notes").value.trim() || null
   };
@@ -689,6 +693,8 @@ function editApplication(id) {
   $("job_description").value = app.job_description || "";
   $("date_applied").value = app.date_applied || "";
   $("closing_date").value = app.closing_date || "";
+  $("interview_date").value = app.interview_date || "";
+  $("follow_up_date").value = app.follow_up_date || "";
   $("status").value = app.status || "Applied";
   $("notes").value = app.notes || "";
 
@@ -877,6 +883,8 @@ function renderApplications() {
     addDetail(details, "Vacancy Reference", app.vacancy_reference);
     addDetail(details, "Circular Number", app.circular_number);
     addDetail(details, "Date Applied", app.date_applied);
+    addDetail(details, "Interview Date", app.interview_date);
+    addDetail(details, "Follow-up Date", app.follow_up_date);
 
     const closingBox = document.createElement("div");
     closingBox.className = "detail";
