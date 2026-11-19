@@ -48,45 +48,70 @@
 <body>
   <main class="container">
     <h1>Application Tracker</h1>
-    <p class="hint">Never Lose Track of Your Applications.</p>
-<section id="auth">
-  <h2>Welcome</h2>
+        <section id="auth">
+      <h2>Welcome</h2>
 
-  <label for="email">Email address</label>
-  <input type="email" id="email" autocomplete="email"
-         placeholder="you@example.com">
+      <label for="email">Email address</label>
+      <input type="email" id="email" autocomplete="email"
+             placeholder="you@example.com">
 
-  <label for="password">Password</label>
-  <input type="password" id="password"
-         autocomplete="current-password"
-         placeholder="At least 6 characters">
+      <label for="password">Password</label>
+      <input type="password" id="password"
+             autocomplete="current-password"
+             placeholder="At least 6 characters">
 
-  <button id="signupButton" type="button" onclick="signUp()">Create Account</button>
-  <button id="loginButton" type="button" onclick="logIn()">Log In</button>
+      <button id="signupButton" type="button" onclick="signUp()">Create Account</button>
+      <button id="loginButton" type="button" onclick="logIn()">Log In</button>
 
-  <p id="message" role="status" aria-live="polite"></p>
-</section>
+      <p id="message" role="status" aria-live="polite"></p>
+    </section>
 
+    <section id="dashboard">
+      <h2>My Job Applications</h2>
+      <p>Keep track of all your job applications in one place.</p>
+
+      <h3>Add New Application</h3>
+
+      <form id="applicationForm" onsubmit="saveApplication(event)">
+        <label>Company Name</label>
+        <input type="text" id="company_name" required>
+
+        <label>Job Title</label>
+        <input type="text" id="job_title" required>
+
+        <label>Vacancy Reference</label>
+        <input type="text" id="vacancy_reference">
+
+        <label>Date Applied</label>
+        <input type="date" id="date_applied">
+
+        <label>Closing Date</label>
+        <input type="date" id="closing_date">
+
+        <label>Application Status</label>
+        <select id="status" required>
+          <option value="Applied">Applied</option>
+          <option value="Shortlisted">Shortlisted</option>
+          <option value="Interview">Interview</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Offered">Offered</option>
+        </select>
+
+        <label>Notes</label>
+        <textarea id="notes"></textarea>
+
+        <button type="submit">Save Application</button>
+      </form>
+
+      <p id="applicationMessage"></p>
+
+      <h3>My Saved Applications</h3>
+      <div id="applicationsList"></div>
+
+      <button type="button" onclick="logOut()">Log Out</button>
+    </section>
 <section id="dashboard">
-  <h2>My Job Applications</h2>
-  <p>Keep track of all your job applications in one place.</p>
-
-  <h3>Add New Application</h3>
-
-  <form id="applicationForm" onsubmit="saveApplication(event)">
-    <label>Company Name</label>
-    <input type="text" id="company_name" required>
-
-    <label>Job Title</label>
-    <input type="text" id="job_title" required>
-
-    <label>Vacancy Reference</label>
-    <input type="text" id="vacancy_reference">
-
-    <label>Date Applied</label>
-    <input type="date" id="date_applied">
-
-    <label>Closing Date</label>
+  <h2>My Job Applicati
     <input type="date" id="closing_date">
 
     <label>Application Status</label>
