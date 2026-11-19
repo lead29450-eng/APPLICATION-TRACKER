@@ -43,7 +43,7 @@ input, select, textarea {
   background: white;
 }
 
-textarea { min-height: 80px; }
+textarea { min-height: 100px; }
 
 button {
   background: #173b68;
@@ -79,6 +79,11 @@ label {
   margin-top: 0;
   color: #173b68;
 }
+
+.description-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 </style>
 </head>
 
@@ -113,7 +118,6 @@ Log In
 
 </section>
 
-
 <section id="dashboard">
 
 <h2>My Job Applications</h2>
@@ -132,6 +136,14 @@ Log In
 
 <label for="vacancy_reference">Vacancy Reference</label>
 <input type="text" id="vacancy_reference">
+
+<label for="circular_number">Circular Number</label>
+<input type="text" id="circular_number"
+placeholder="e.g. DPSA Vacancy Circular 45 of 2026">
+
+<label for="job_description">Job Description</label>
+<textarea id="job_description"
+placeholder="Paste the full job advertisement, duties and requirements here..."></textarea>
 
 <label for="date_applied">Date Applied</label>
 <input type="date" id="date_applied">
@@ -167,7 +179,6 @@ Log In
 </section>
 
 </main>
-
 
 <script>
 
@@ -227,268 +238,4 @@ const email = document.getElementById("email").value.trim();
 const password = document.getElementById("password").value;
 
 if (!email || !password) {
-message.textContent = "Please enter your email address and password.";
-return;
-}
-
-if (password.length < 6) {
-message.textContent = "Your password must be at least 6 characters.";
-return;
-}
-
-setBusy(true);
-
-try {
-
-const { data, error } = await supabaseClient.auth.signUp({
-email,
-password
-});
-
-if (error) throw error;
-
-if (data.session) {
-showDashboard();
-} else {
-message.textContent =
-"Account created. Check your email for confirmation, then log in.";
-}
-
-} catch (error) {
-message.textContent = error.message;
-} finally {
-setBusy(false);
-}
-
-}
-
-
-// LOG IN
-
-async function logIn() {
-
-message.textContent = "";
-
-const email = document.getElementById("email").value.trim();
-const password = document.getElementById("password").value;
-
-if (!email || !password) {
-message.textContent = "Please enter your email address and password.";
-return;
-}
-
-setBusy(true);
-
-try {
-
-const { error } = await supabaseClient.auth.signInWithPassword({
-email,
-password
-});
-
-if (error) throw error;
-
-showDashboard();
-
-} catch (error) {
-message.textContent = error.message;
-} finally {
-setBusy(false);
-}
-
-}
-
-
-// LOG OUT
-
-async function logOut() {
-
-const { error } = await supabaseClient.auth.signOut();
-
-if (error) {
-document.getElementById("applicationMessage").textContent =
-error.message;
-return;
-}
-
-message.textContent = "You have logged out.";
-showLogin();
-
-}
-
-
-// SAVE APPLICATION
-
-async function saveApplication(event) {
-
-event.preventDefault();
-
-const applicationMessage =
-document.getElementById("applicationMessage");
-
-applicationMessage.textContent = "";
-
-try {
-
-const {
-data: { user },
-error: userError
-} = await supabaseClient.auth.getUser();
-
-if (userError) throw userError;
-
-if (!user) {
-throw new Error("Please log in again.");
-}
-
-const application = {
-
-user_id: user.id,
-
-company_name:
-document.getElementById("company_name").value.trim(),
-
-job_title:
-document.getElementById("job_title").value.trim(),
-
-vacancy_reference:
-document.getElementById("vacancy_reference").value || null,
-
-date_applied:
-document.getElementById("date_applied").value || null,
-
-closing_date:
-document.getElementById("closing_date").value || null,
-
-status:
-document.getElementById("status").value,
-
-notes:
-document.getElementById("notes").value || null
-
-};
-
-const { error } = await supabaseClient
-.from("applications")
-.insert([application]);
-
-if (error) throw error;
-
-applicationMessage.textContent =
-"Application saved successfully!";
-
-document.getElementById("applicationForm").reset();
-
-await loadApplications();
-
-} catch (error) {
-applicationMessage.textContent = error.message;
-}
-
-}
-
-
-// LOAD APPLICATIONS
-
-async function loadApplications() {
-
-const list = document.getElementById("applicationsList");
-
-list.textContent = "Loading applications...";
-
-try {
-
-const {
-data: { user },
-error: userError
-} = await supabaseClient.auth.getUser();
-
-if (userError) throw userError;
-
-if (!user) {
-list.textContent = "Please log in.";
-return;
-}
-
-const { data, error } = await supabaseClient
-.from("applications")
-.select("*")
-.eq("user_id", user.id)
-.order("created_at", { ascending: false });
-
-if (error) throw error;
-
-list.replaceChildren();
-
-if (!data.length) {
-list.textContent = "No applications saved yet.";
-return;
-}
-
-data.forEach(app => {
-
-const card = document.createElement("div");
-card.className = "application-card";
-
-const title = document.createElement("h4");
-const company = document.createElement("p");
-const reference = document.createElement("p");
-const dateApplied = document.createElement("p");
-const status = document.createElement("p");
-const closing = document.createElement("p");
-const notes = document.createElement("p");
-
-title.textContent = app.job_title;
-
-company.textContent = "Company: " + app.company_name;
-
-reference.textContent =
-"Reference: " + (app.vacancy_reference || "Not provided");
-
-dateApplied.textContent =
-"Date applied: " + (app.date_applied || "Not provided");
-
-status.textContent = "Status: " + app.status;
-
-closing.textContent =
-"Closing date: " + (app.closing_date || "Not provided");
-
-notes.textContent = "Notes: " + (app.notes || "None");
-
-card.append(
-title,
-company,
-reference,
-dateApplied,
-status,
-closing,
-notes
-);
-
-list.appendChild(card);
-
-});
-
-} catch (error) {
-list.textContent = error.message;
-}
-
-}
-
-
-// CHECK EXISTING SESSION
-
-supabaseClient.auth.getSession().then(({ data, error }) => {
-
-if (error) {
-message.textContent = error.message;
-} else if (data.session) {
-showDashboard();
-}
-
-});
-
-</script>
-
-</body>
-</html>
+message.textContent = "Please
