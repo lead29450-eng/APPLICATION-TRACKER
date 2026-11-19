@@ -3,961 +3,377 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Application Tracker</title>
+<meta name="description" content="Application Tracker helps South African job seekers organise job applications, closing dates, interviews and follow-ups in one place.">
+<meta name="theme-color" content="#173b83">
+<title>Application Tracker | Organise Your Job Search</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-:root {
-  --primary: #2457d6;
-  --dark: #172554;
-  --light: #f4f7fc;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --white: #ffffff;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--light);
-  color: #1e293b;
-}
-
-button, input, select, textarea {
-  font: inherit;
-}
-
-.topbar {
-  background: #fff;
-  padding: 18px 5%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border);
-}
-
-.brand {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--dark);
-}
-
-.brand span { color: var(--primary); }
-
-.container {
-  max-width: 1150px;
-  margin: 35px auto;
-  padding: 0 20px;
-}
-
-.hero {
-  background: linear-gradient(120deg, #173b83, #3977ed);
-  color: white;
-  padding: 35px;
-  border-radius: 18px;
-  margin-bottom: 28px;
-  box-shadow: 0 8px 25px rgba(36,87,214,.18);
-}
-
-.hero h1 {
-  margin: 0 0 10px;
-  font-size: 30px;
-}
-
-.hero p {
-  margin: 0;
-  opacity: .9;
-  line-height: 1.6;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 15px;
-  margin-bottom: 28px;
-}
-
-.stat {
-  background: white;
-  padding: 20px;
-  border-radius: 13px;
-  border: 1px solid var(--border);
-  box-shadow: 0 3px 10px rgba(0,0,0,.03);
-}
-
-.stat small {
-  color: var(--muted);
-  display: block;
-  margin-bottom: 10px;
-}
-
-.stat strong {
-  font-size: 28px;
-  color: var(--dark);
-}
-
-.panel {
-  background: white;
-  padding: 25px;
-  border-radius: 15px;
-  margin-bottom: 25px;
-  border: 1px solid var(--border);
-  box-shadow: 0 3px 12px rgba(0,0,0,.035);
-}
-
-.panel h2 {
-  margin-top: 0;
-  color: var(--dark);
-}
-
-label {
-  display: block;
-  font-weight: 700;
-  margin: 15px 0 7px;
-  font-size: 14px;
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 13px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: white;
-  color: #1e293b;
-}
-
-textarea {
-  min-height: 110px;
-  resize: vertical;
-}
-
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(36,87,214,.1);
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 18px;
-}
-
-.btn {
-  border: none;
-  padding: 13px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-  transition: .2s;
-}
-
-.btn:hover { opacity: .88; }
-
-.primary {
-  background: var(--primary);
-  color: white;
-}
-
-.secondary {
-  background: #e8eefc;
-  color: var(--primary);
-}
-
-.danger {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.logout {
-  background: #fff0f0;
-  color: #b91c1c;
-  padding: 10px 15px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-#cancelEdit { display: none; }
-
-.search {
-  margin-bottom: 20px;
-}
-
-.application-card {
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  padding: 20px;
-  margin-bottom: 16px;
-  background: white;
-  transition: .2s;
-}
-
-.application-card:hover {
-  box-shadow: 0 6px 18px rgba(0,0,0,.06);
-  transform: translateY(-2px);
-}
-
-.card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.application-card h3 {
-  margin: 0 0 8px;
-  color: var(--dark);
-  font-size: 19px;
-}
-
-.company {
-  color: var(--muted);
-  margin: 0 0 15px;
-}
-
-.badge {
-  padding: 7px 12px;
-  border-radius: 30px;
-  font-size: 12px;
-  font-weight: 700;
-  display: inline-block;
-}
-
-.Applied { background: #dbeafe; color: #1d4ed8; }
-.Shortlisted { background: #ede9fe; color: #6d28d9; }
-.Interview { background: #fef3c7; color: #92400e; }
-.Rejected { background: #fee2e2; color: #b91c1c; }
-.Offered { background: #dcfce7; color: #15803d; }
-
-.details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 15px 0;
-}
-
-.detail {
-  background: #f8fafc;
-  padding: 11px;
-  border-radius: 8px;
-  overflow-wrap: anywhere;
-}
-
-.detail small {
-  color: var(--muted);
-  display: block;
-  margin-bottom: 5px;
-}
-
-.description {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 13px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  line-height: 1.5;
-}
-
-.countdown {
-  font-weight: 700;
-  color: #15803d;
-}
-
-.countdown.closed { color: #b91c1c; }
-.countdown.today { color: #b45309; }
-
-.card-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.card-actions button {
-  flex: 1;
-}
-
-.empty {
-  text-align: center;
-  color: var(--muted);
-  padding: 35px 10px;
-}
-
-#auth {
-  max-width: 430px;
-  margin: 70px auto;
-}
-
-#auth .panel { padding: 30px; }
-
-#auth h1 {
-  color: var(--dark);
-  text-align: center;
-}
-
-#message, #applicationMessage {
-  overflow-wrap: anywhere;
-  line-height: 1.5;
-}
-
-#dashboard { display: none; }
-
-@media(max-width: 800px) {
-  .stats { grid-template-columns: repeat(2, 1fr); }
-  .stat:last-child { grid-column: span 2; }
-}
-
-@media(max-width: 550px) {
-  .container { margin: 20px auto; }
-  .hero { padding: 25px; }
-  .hero h1 { font-size: 24px; }
-  .form-grid, .details { grid-template-columns: 1fr; }
-  .panel { padding: 18px; }
-  .topbar { padding: 15px 18px; }
-  .brand { font-size: 19px; }
-  .card-actions { flex-direction: column; }
-}
+:root{--primary:#2457d6;--dark:#172554;--light:#f4f7fc;--muted:#64748b;--border:#e2e8f0;--white:#fff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Arial,sans-serif;background:var(--light);color:#1e293b}button,input,select,textarea{font:inherit}
+.topbar{background:#fff;padding:16px 5%;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.brand{font-size:22px;font-weight:800;color:var(--dark);white-space:nowrap}.brand span{color:var(--primary)}
+.nav{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.nav a,.footer a{color:#334155;text-decoration:none;font-size:14px;font-weight:700}.nav a:hover,.footer a:hover{color:var(--primary)}
+.container{max-width:1150px;margin:35px auto;padding:0 20px}.public-wrap{max-width:1150px;margin:auto;padding:0 20px}
+.public-hero{margin:34px auto 24px;padding:58px 48px;border-radius:22px;color:#fff;background:linear-gradient(120deg,#173b83,#3977ed);box-shadow:0 12px 30px rgba(36,87,214,.16)}
+.public-hero .eyebrow{font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:12px;opacity:.9}.public-hero h1{font-size:clamp(34px,5vw,54px);line-height:1.08;max-width:720px;margin:14px 0}.public-hero p{font-size:18px;line-height:1.65;max-width:700px;opacity:.94}
+.btn{border:0;padding:13px 18px;border-radius:8px;cursor:pointer;font-weight:700;transition:.2s}.btn:hover{opacity:.88}.btn:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--primary);color:#fff}.hero-btn{background:#fff;color:#173b83;padding:15px 23px;margin-top:10px}.secondary{background:#e8eefc;color:var(--primary)}.danger{background:#fee2e2;color:#b91c1c}.logout{background:#fff0f0;color:#b91c1c;padding:10px 15px}
+.section{padding:28px 0;scroll-margin-top:85px}.section h2{font-size:28px;color:var(--dark);margin:0 0 12px}.section-intro{color:var(--muted);line-height:1.7;max-width:780px}
+.feature-grid,.guide-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}.feature,.guide-card,.info-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px}.feature h3,.guide-card h3{color:var(--dark);margin:8px 0}.feature p,.guide-card p,.info-card p{color:var(--muted);line-height:1.65;margin-bottom:0}.feature-icon{font-size:26px}
+.info-card{margin-top:18px}.info-card h3{color:var(--dark);margin-top:0}.info-card p{margin:10px 0}.info-card ul{color:var(--muted);line-height:1.8;padding-left:22px}
+.cta{background:#e8eefc;border:1px solid #d6e2ff;border-radius:16px;padding:28px;margin:22px 0}.cta h2{margin-top:0;color:var(--dark)}.cta p{color:#475569;line-height:1.6}
+.footer{background:#fff;border-top:1px solid var(--border);margin-top:35px;padding:26px 5%;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px}.footer-links{display:flex;gap:16px;flex-wrap:wrap}
+#auth{max-width:430px;margin:55px auto;padding:0 16px}#auth .panel{padding:30px}#auth h1{color:var(--dark);text-align:center}.auth-back{display:block;text-align:center;margin-top:16px;color:var(--primary);font-weight:700;text-decoration:none}
+.panel{background:#fff;padding:25px;border-radius:15px;margin-bottom:25px;border:1px solid var(--border);box-shadow:0 3px 12px rgba(0,0,0,.035)}.panel h2{margin-top:0;color:var(--dark)}
+label{display:block;font-weight:700;margin:15px 0 7px;font-size:14px}input,select,textarea{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1e293b}textarea{min-height:110px;resize:vertical}input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(36,87,214,.1)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.form-actions{display:flex;gap:10px;margin-top:20px}#cancelEdit{display:none}
+.hero{background:linear-gradient(120deg,#173b83,#3977ed);color:#fff;padding:35px;border-radius:18px;margin-bottom:28px;box-shadow:0 8px 25px rgba(36,87,214,.18)}.hero h1{margin:0 0 10px;font-size:30px}.hero p{margin:0;opacity:.9;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:15px;margin-bottom:28px}.stat{background:#fff;padding:20px;border-radius:13px;border:1px solid var(--border);box-shadow:0 3px 10px rgba(0,0,0,.03)}.stat small{color:var(--muted);display:block;margin-bottom:10px}.stat strong{font-size:28px;color:var(--dark)}
+.search{margin-bottom:20px}.application-card{border:1px solid var(--border);border-radius:13px;padding:20px;margin-bottom:16px;background:#fff;transition:.2s}.application-card:hover{box-shadow:0 6px 18px rgba(0,0,0,.06);transform:translateY(-2px)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.application-card h3{margin:0 0 8px;color:var(--dark);font-size:19px}.company{color:var(--muted);margin:0 0 15px}
+.badge{padding:7px 12px;border-radius:30px;font-size:12px;font-weight:700;display:inline-block}.Applied{background:#dbeafe;color:#1d4ed8}.Shortlisted{background:#ede9fe;color:#6d28d9}.Interview{background:#fef3c7;color:#92400e}.Rejected{background:#fee2e2;color:#b91c1c}.Offered{background:#dcfce7;color:#15803d}
+.details{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:15px 0}.detail{background:#f8fafc;padding:11px;border-radius:8px;overflow-wrap:anywhere}.detail small{color:var(--muted);display:block;margin-bottom:5px}.description{background:#f8fafc;border-radius:8px;padding:13px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.countdown{font-weight:700;color:#15803d}.countdown.closed{color:#b91c1c}.countdown.today{color:#b45309}.card-actions{display:flex;gap:10px;margin-top:16px}.card-actions button{flex:1}.empty{text-align:center;color:var(--muted);padding:35px 10px}
+#message,#applicationMessage{overflow-wrap:anywhere;line-height:1.5}#dashboard{display:none}.hidden{display:none!important}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.stat:last-child{grid-column:span 2}.feature-grid,.guide-grid{grid-template-columns:repeat(2,1fr)}.nav{gap:10px}}
+@media(max-width:550px){.topbar{padding:13px 16px;align-items:flex-start;flex-wrap:wrap}.brand{font-size:19px}.nav{width:100%;gap:12px}.nav a{font-size:12px}.public-hero{padding:35px 24px;margin-top:20px}.public-hero p{font-size:16px}.feature-grid,.guide-grid,.form-grid,.details{grid-template-columns:1fr}.container{margin:20px auto}.hero{padding:25px}.hero h1{font-size:24px}.panel{padding:18px}.card-actions{flex-direction:column}.footer{padding:22px 18px}}
 </style>
 </head>
-
 <body>
-
 <header class="topbar">
-  <div class="brand">Application<span>Tracker</span></div>
-  <button id="logoutButton" class="btn logout"
-    style="display:none" onclick="logOut()">Log Out</button>
+  <a class="brand" href="#home" onclick="showHome()" style="text-decoration:none">Application<span>Tracker</span></a>
+  <nav class="nav" id="publicNav">
+    <a href="#features">Features</a><a href="#about">About</a><a href="#guide">Job Search Guide</a><a href="#privacy">Privacy</a><a href="#terms">Terms</a>
+    <button id="navGetStarted" class="btn primary" onclick="openTracker()">Get Started</button>
+  </nav>
+  <button id="logoutButton" class="btn logout" style="display:none" onclick="logOut()">Log Out</button>
 </header>
 
-<section id="auth">
+<main id="publicHome">
+  <div class="public-wrap">
+    <section class="public-hero" id="home">
+      <div class="eyebrow">A simpler way to manage your job search</div>
+      <h1>Your Job Search.<br>Organised.</h1>
+      <p>Keep track of the jobs you apply for, remember closing dates, prepare for interviews and follow up with confidence — all in one place.</p>
+      <button class="btn hero-btn" onclick="openTracker()">Get Started – Free</button>
+    </section>
+
+    <section class="section" id="features">
+      <h2>Everything in one place</h2>
+      <p class="section-intro">A practical organiser for your job search. Record important vacancy information and keep an eye on every application.</p>
+      <div class="feature-grid">
+        <article class="feature"><div class="feature-icon">📝</div><h3>Save applications</h3><p>Record the employer, job title, vacancy reference, circular number and application date.</p></article>
+        <article class="feature"><div class="feature-icon">📅</div><h3>Track important dates</h3><p>Keep closing dates, interview dates and follow-up dates together so they are easier to remember.</p></article>
+        <article class="feature"><div class="feature-icon">📊</div><h3>See your progress</h3><p>View your application totals and track statuses such as Applied, Shortlisted and Interview.</p></article>
+        <article class="feature"><div class="feature-icon">📄</div><h3>Keep vacancy details</h3><p>Save the job description and notes for each opportunity so you can refer back to them.</p></article>
+        <article class="feature"><div class="feature-icon">🔎</div><h3>Find applications quickly</h3><p>Search your saved applications by employer, job title or vacancy reference.</p></article>
+        <article class="feature"><div class="feature-icon">🔐</div><h3>Keep documents on your device</h3><p>The tracker does not ask you to upload CVs, identity documents or certificates.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="about">
+      <h2>About Application Tracker</h2>
+      <div class="info-card">
+        <p>Application Tracker is a simple tool designed to help job seekers organise their own job applications. It helps you record where you applied, what position you applied for, important dates and the progress of each application.</p>
+        <p>It is an organiser, not a recruitment agency. It does not submit applications, guarantee interviews or promise employment. You remain responsible for checking vacancy information and submitting applications to employers through their official channels.</p>
+      </div>
+    </section>
+
+    <section class="section" id="guide">
+      <h2>A few useful job-search habits</h2>
+      <p class="section-intro">A consistent routine can make it easier to manage multiple applications.</p>
+      <div class="guide-grid">
+        <article class="guide-card"><h3>1. Check the requirements</h3><p>Read the full vacancy notice and confirm that you meet the essential requirements before applying.</p></article>
+        <article class="guide-card"><h3>2. Note the closing date</h3><p>Give yourself enough time to prepare documents and submit your application before the deadline.</p></article>
+        <article class="guide-card"><h3>3. Keep a record</h3><p>Record the employer, post title, reference number and date you submitted the application.</p></article>
+        <article class="guide-card"><h3>4. Prepare for interviews</h3><p>Review the job requirements and prepare examples that show your skills and experience.</p></article>
+        <article class="guide-card"><h3>5. Follow up appropriately</h3><p>Use the employer's stated communication process. Be patient and keep a note of any follow-up date.</p></article>
+        <article class="guide-card"><h3>6. Protect your information</h3><p>Only send personal documents through official, trusted application channels. Never share your password.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="privacy">
+      <h2>Privacy Policy</h2>
+      <div class="info-card">
+        <p><strong>What information is used:</strong> When you create an account, your email address is used for account access. Information you enter about applications — such as employer, job title, vacancy references, dates, status, job description and notes — is stored to provide the tracker service.</p>
+        <p><strong>Where information is stored:</strong> The application uses Supabase authentication and database services. Your information is transmitted to and stored by those services. Do not use the tracker on a shared device unless you log out afterwards.</p>
+        <p><strong>Documents:</strong> Application Tracker does not provide CV, identity document, certificate or other file uploads. Keep these documents securely on your own device and submit them directly to employers through their official application channels.</p>
+        <p><strong>Your choices:</strong> You can edit or delete individual application records inside your account. Deleting an application record does not necessarily delete your account. For account deletion or privacy questions, the site owner must provide a working support contact before public launch.</p>
+        <p><strong>Security:</strong> Reasonable technical measures are used, but no internet service can promise absolute security. Use a unique password and do not share your login details.</p>
+        <p><strong>Updates:</strong> This policy may be updated as the service changes. The latest version will be published on this page.</p>
+        <p><em>Before public launch, the site owner should add a real support contact and confirm the final data-retention and account-deletion process.</em></p>
+      </div>
+    </section>
+
+    <section class="section" id="terms">
+      <h2>Terms and Conditions</h2>
+      <div class="info-card">
+        <p>By creating an account or using Application Tracker, you agree to use the service responsibly and provide accurate information.</p>
+        <ul>
+          <li>Application Tracker is an organisational tool and is not an employer, recruitment agency or job-placement service.</li>
+          <li>The service does not guarantee employment, interviews, shortlisting or responses from employers.</li>
+          <li>You are responsible for verifying vacancy details, deadlines and application requirements with the relevant employer.</li>
+          <li>You must keep your account password secure and must not attempt to access another person's account or data.</li>
+          <li>Do not use the service for unlawful activity, harmful content or misuse of the platform.</li>
+          <li>The service is provided as available. Features may change, be interrupted or become unavailable.</li>
+        </ul>
+        <p>These terms should be reviewed and updated with appropriate legal advice before the website is commercially launched.</p>
+      </div>
+    </section>
+
+    <section class="cta">
+      <h2>Ready to organise your applications?</h2>
+      <p>Create a free account and start keeping your job-search information in one place.</p>
+      <button class="btn primary" onclick="openTracker()">Open Application Tracker</button>
+    </section>
+
+    <section class="section" id="contact">
+      <h2>Contact</h2>
+      <div class="info-card"><p>Support contact details will be published here before public launch. Please do not enter sensitive personal documents into the tracker.</p></div>
+    </section>
+  </div>
+</main>
+
+<section id="auth" class="hidden">
   <div class="panel">
-    <h1>Welcome Back</h1>
-    <p style="text-align:center;color:#64748b">
-      Manage your job applications in one place.
-    </p>
-
-    <label>Email Address</label>
-    <input type="email" id="email" placeholder="you@example.com">
-
-    <label>Password</label>
-    <input type="password" id="password" placeholder="Your password">
-
-    <button class="btn primary" style="width:100%;margin-top:20px"
-      id="loginButton" onclick="logIn()">Log In</button>
-
-    <button class="btn secondary" style="width:100%;margin-top:10px"
-      id="signupButton" onclick="signUp()">Create Account</button>
-
+    <h1>Welcome to Application Tracker</h1>
+    <p style="text-align:center;color:#64748b">Log in or create an account to manage your job applications.</p>
+    <label>Email Address</label><input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+    <label>Password</label><input type="password" id="password" placeholder="Your password" autocomplete="current-password">
+    <button class="btn primary" style="width:100%;margin-top:20px" id="loginButton" onclick="logIn()">Log In</button>
+    <button class="btn secondary" style="width:100%;margin-top:10px" id="signupButton" onclick="signUp()">Create Account</button>
     <p id="message" role="status"></p>
+    <a class="auth-back" href="#home" onclick="showHome()">← Back to website</a>
   </div>
 </section>
 
 <main id="dashboard">
 <div class="container">
-
-  <section class="hero">
-    <h1>My Job Applications</h1>
-    <p>Stay organised, track your progress and never miss an opportunity.</p>
-  </section>
-
+  <section class="hero"><h1>My Job Applications</h1><p>Stay organised, track your progress and never miss an opportunity.</p></section>
   <section class="stats">
-    <div class="stat">
-      <small>Total Applications</small>
-      <strong id="totalCount">0</strong>
-    </div>
-    <div class="stat">
-      <small>Applied</small>
-      <strong id="appliedCount">0</strong>
-    </div>
-    <div class="stat">
-      <small>Shortlisted</small>
-      <strong id="shortlistedCount">0</strong>
-    </div>
-    <div class="stat">
-      <small>Interviews</small>
-      <strong id="interviewCount">0</strong>
-    </div>
-    <div class="stat">
-      <small>Offers</small>
-      <strong id="offeredCount">0</strong>
-    </div>
+    <div class="stat"><small>Total Applications</small><strong id="totalCount">0</strong></div>
+    <div class="stat"><small>Applied</small><strong id="appliedCount">0</strong></div>
+    <div class="stat"><small>Shortlisted</small><strong id="shortlistedCount">0</strong></div>
+    <div class="stat"><small>Interviews</small><strong id="interviewCount">0</strong></div>
+    <div class="stat"><small>Offers</small><strong id="offeredCount">0</strong></div>
   </section>
-
   <section class="panel" id="formPanel">
     <h2 id="formHeading">＋ Add New Application</h2>
-
     <form id="applicationForm" onsubmit="saveApplication(event)">
-
       <div class="form-grid">
-        <div>
-          <label>Company Name *</label>
-          <input id="company_name" required>
-        </div>
-
-        <div>
-          <label>Job Title *</label>
-          <input id="job_title" required>
-        </div>
-
-        <div>
-          <label>Vacancy Reference</label>
-          <input id="vacancy_reference">
-        </div>
-
-        <div>
-          <label>Circular Number</label>
-          <input id="circular_number"
-            placeholder="e.g. DPSA Circular 45 of 2026">
-        </div>
-
-        <div>
-          <label>Date Applied</label>
-          <input type="date" id="date_applied">
-        </div>
-
-        <div>
-          <label>Closing Date</label>
-          <input type="date" id="closing_date">
-        </div>
-
-        <div>
-          <label>Interview Date</label>
-          <input type="date" id="interview_date">
-        </div>
-
-        <div>
-          <label>Follow-up Date</label>
-          <input type="date" id="follow_up_date">
-        </div>
-
-        <div>
-          <label>Application Status</label>
-          <select id="status">
-            <option value="Applied">Applied</option>
-            <option value="Shortlisted">Shortlisted</option>
-            <option value="Interview">Interview</option>
-            <option value="Rejected">Rejected</option>
-            <option value="Offered">Offered</option>
-          </select>
-        </div>
+        <div><label>Company Name *</label><input id="company_name" required></div>
+        <div><label>Job Title *</label><input id="job_title" required></div>
+        <div><label>Vacancy Reference</label><input id="vacancy_reference"></div>
+        <div><label>Circular Number</label><input id="circular_number" placeholder="e.g. DPSA Circular 45 of 2026"></div>
+        <div><label>Date Applied</label><input type="date" id="date_applied"></div>
+        <div><label>Closing Date</label><input type="date" id="closing_date"></div>
+        <div><label>Interview Date</label><input type="date" id="interview_date"></div>
+        <div><label>Follow-up Date</label><input type="date" id="follow_up_date"></div>
+        <div><label>Application Status</label><select id="status"><option value="Applied">Applied</option><option value="Shortlisted">Shortlisted</option><option value="Interview">Interview</option><option value="Rejected">Rejected</option><option value="Offered">Offered</option></select></div>
       </div>
-
-      <label>Job Description</label>
-      <textarea id="job_description"
-        placeholder="Paste the job advertisement, duties and requirements here..."></textarea>
-
-      <label>Notes</label>
-      <textarea id="notes"
-        placeholder="Add reminders, feedback or other notes..."></textarea>
-
-      <div class="form-actions">
-        <button type="submit" class="btn primary" id="saveButton">
-          Save Application
-        </button>
-        <button type="button" class="btn secondary"
-          id="cancelEdit" onclick="cancelEditing()">Cancel</button>
-      </div>
-
+      <label>Job Description</label><textarea id="job_description" placeholder="Paste the job advertisement, duties and requirements here..."></textarea>
+      <label>Notes</label><textarea id="notes" placeholder="Add reminders, feedback or other notes..."></textarea>
+      <div class="form-actions"><button type="submit" class="btn primary" id="saveButton">Save Application</button><button type="button" class="btn secondary" id="cancelEdit" onclick="cancelEditing()">Cancel</button></div>
     </form>
-
     <p id="applicationMessage" role="status"></p>
   </section>
-
   <section class="panel">
     <h2>My Saved Applications</h2>
-
-    <input class="search" id="searchInput"
-      placeholder="🔍 Search by company, job title or reference..."
-      oninput="renderApplications()">
-
-    <div id="applicationsList">
-      <p class="empty">Loading applications...</p>
-    </div>
+    <input class="search" id="searchInput" placeholder="🔍 Search by company, job title or reference..." oninput="renderApplications()">
+    <div id="applicationsList"><p class="empty">Loading applications...</p></div>
   </section>
-
+  <p style="text-align:center"><button class="btn secondary" onclick="showHome()">Back to website</button></p>
 </div>
 </main>
 
+<footer class="footer" id="siteFooter">
+  <div>© <span id="year"></span> Application Tracker. All rights reserved.</div>
+  <div class="footer-links"><a href="#about">About</a><a href="#guide">Job Search Guide</a><a href="#privacy">Privacy</a><a href="#terms">Terms</a><a href="#contact">Contact</a></div>
+</footer>
+
 <script>
-const SUPABASE_URL =
-"https://immcicsxrfpgfbtkwacc.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_lgh1qa3QVGF4k9MTFL8gYA_ob_Gx182";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
-
+const SUPABASE_URL = "https://immcicsxrfpgfbtkwacc.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_lgh1qa3QVGF4k9MTFL8gYA_ob_Gx182";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 let applications = [];
 let editingId = null;
-
 const $ = id => document.getElementById(id);
+$("year").textContent = new Date().getFullYear();
 
-function showDashboard() {
-  $("auth").style.display = "none";
-  $("dashboard").style.display = "block";
-  $("logoutButton").style.display = "block";
-  loadApplications();
-}
-
-function showLogin() {
-  $("auth").style.display = "block";
+function showHome() {
+  $("publicHome").style.display = "block";
+  $("auth").classList.add("hidden");
   $("dashboard").style.display = "none";
   $("logoutButton").style.display = "none";
+  $("publicNav").style.display = "flex";
+  $("siteFooter").style.display = "flex";
+  window.scrollTo({top:0,behavior:"smooth"});
 }
-
-function setAuthBusy(busy) {
-  $("loginButton").disabled = busy;
-  $("signupButton").disabled = busy;
+function openTracker() {
+  $("publicHome").style.display = "none";
+  $("auth").classList.remove("hidden");
+  $("dashboard").style.display = "none";
+  $("logoutButton").style.display = "none";
+  $("publicNav").style.display = "none";
+  $("siteFooter").style.display = "none";
+  window.scrollTo({top:0,behavior:"smooth"});
 }
+function showDashboard() {
+  $("publicHome").style.display = "none";
+  $("auth").classList.add("hidden");
+  $("dashboard").style.display = "block";
+  $("logoutButton").style.display = "block";
+  $("publicNav").style.display = "none";
+  $("siteFooter").style.display = "none";
+  loadApplications();
+}
+function showLogin() { showHome(); }
+function setAuthBusy(busy) { $("loginButton").disabled=busy; $("signupButton").disabled=busy; }
 
 async function signUp() {
-  $("message").textContent = "";
-
-  const email = $("email").value.trim();
-  const password = $("password").value;
-
-  if (!email || !password) {
-    $("message").textContent =
-      "Please enter your email address and password.";
-    return;
-  }
-
-  if (password.length < 6) {
-    $("message").textContent =
-      "Password must contain at least 6 characters.";
-    return;
-  }
-
+  $("message").textContent="";
+  const email=$("email").value.trim(), password=$("password").value;
+  if(!email||!password){$("message").textContent="Please enter your email address and password.";return;}
+  if(password.length<6){$("message").textContent="Password must contain at least 6 characters.";return;}
   setAuthBusy(true);
-
   try {
-    const { data, error } =
-      await supabaseClient.auth.signUp({ email, password });
-
-    if (error) throw error;
-
-    if (data.session) {
-      showDashboard();
-    } else {
-      $("message").textContent =
-        "Account created. Check your email for confirmation, then log in.";
-    }
-  } catch (error) {
-    $("message").textContent = error.message;
-  } finally {
-    setAuthBusy(false);
-  }
+    const {data,error}=await supabaseClient.auth.signUp({email,password});
+    if(error) throw error;
+    if(data.session) showDashboard();
+    else $("message").textContent="Account created. Check your email for confirmation, then log in.";
+  } catch(error) {$("message").textContent=error.message;}
+  finally {setAuthBusy(false);}
 }
-
 async function logIn() {
-  $("message").textContent = "";
-
-  const email = $("email").value.trim();
-  const password = $("password").value;
-
-  if (!email || !password) {
-    $("message").textContent =
-      "Please enter your email address and password.";
-    return;
-  }
-
+  $("message").textContent="";
+  const email=$("email").value.trim(), password=$("password").value;
+  if(!email||!password){$("message").textContent="Please enter your email address and password.";return;}
   setAuthBusy(true);
-
   try {
-    const { error } =
-      await supabaseClient.auth.signInWithPassword({
-        email, password
-      });
-
-    if (error) throw error;
-
+    const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+    if(error) throw error;
     showDashboard();
-  } catch (error) {
-    $("message").textContent = error.message;
-  } finally {
-    setAuthBusy(false);
-  }
+  } catch(error) {$("message").textContent=error.message;}
+  finally {setAuthBusy(false);}
 }
-
 async function logOut() {
-  const { error } = await supabaseClient.auth.signOut();
-
-  if (error) {
-    $("applicationMessage").textContent = error.message;
-    return;
-  }
-
-  showLogin();
+  const {error}=await supabaseClient.auth.signOut();
+  if(error){$("applicationMessage").textContent=error.message;return;}
+  applications=[]; showHome();
 }
-
 async function getCurrentUser() {
-  const { data, error } = await supabaseClient.auth.getUser();
-
-  if (error) throw error;
-  if (!data.user) throw new Error("Please log in again.");
-
+  const {data,error}=await supabaseClient.auth.getUser();
+  if(error) throw error;
+  if(!data.user) throw new Error("Please log in again.");
   return data.user;
 }
-
 function getFormData(userId) {
-  return {
-    user_id: userId,
-    company_name: $("company_name").value.trim(),
-    job_title: $("job_title").value.trim(),
-    vacancy_reference: $("vacancy_reference").value.trim() || null,
-    circular_number: $("circular_number").value.trim() || null,
-    job_description: $("job_description").value.trim() || null,
-    date_applied: $("date_applied").value || null,
-    closing_date: $("closing_date").value || null,
-    interview_date: $("interview_date").value || null,
-    follow_up_date: $("follow_up_date").value || null,
-    status: $("status").value,
-    notes: $("notes").value.trim() || null
-  };
+  return {user_id:userId,company_name:$("company_name").value.trim(),job_title:$("job_title").value.trim(),
+    vacancy_reference:$("vacancy_reference").value.trim()||null,circular_number:$("circular_number").value.trim()||null,
+    job_description:$("job_description").value.trim()||null,date_applied:$("date_applied").value||null,
+    closing_date:$("closing_date").value||null,interview_date:$("interview_date").value||null,
+    follow_up_date:$("follow_up_date").value||null,status:$("status").value,notes:$("notes").value.trim()||null};
 }
-
 async function saveApplication(event) {
-  event.preventDefault();
-
-  const button = $("saveButton");
-  const message = $("applicationMessage");
-
-  button.disabled = true;
-  message.textContent = "Saving...";
-
+  event.preventDefault(); const button=$("saveButton"),message=$("applicationMessage");
+  button.disabled=true;message.textContent="Saving...";
   try {
-    const user = await getCurrentUser();
-    const application = getFormData(user.id);
-
-    let result;
-
-    if (editingId) {
-      result = await supabaseClient
-        .from("applications")
-        .update(application)
-        .eq("id", editingId)
-        .eq("user_id", user.id);
-    } else {
-      result = await supabaseClient
-        .from("applications")
-        .insert([application]);
-    }
-
-    if (result.error) throw result.error;
-
-    message.textContent = editingId
-      ? "Application updated successfully!"
-      : "Application saved successfully!";
-
-    resetForm();
-    await loadApplications();
-
-  } catch (error) {
-    message.textContent = "Error: " + error.message;
-  } finally {
-    button.disabled = false;
-  }
+    const user=await getCurrentUser(),application=getFormData(user.id);let result;
+    if(editingId) result=await supabaseClient.from("applications").update(application).eq("id",editingId).eq("user_id",user.id);
+    else result=await supabaseClient.from("applications").insert([application]);
+    if(result.error) throw result.error;
+    message.textContent=editingId?"Application updated successfully!":"Application saved successfully!";
+    resetForm();await loadApplications();
+  } catch(error){message.textContent="Error: "+error.message;}
+  finally{button.disabled=false;}
 }
-
 function resetForm() {
-  $("applicationForm").reset();
-  editingId = null;
-  $("formHeading").textContent = "＋ Add New Application";
-  $("saveButton").textContent = "Save Application";
-  $("cancelEdit").style.display = "none";
+  $("applicationForm").reset();editingId=null;$("formHeading").textContent="＋ Add New Application";
+  $("saveButton").textContent="Save Application";$("cancelEdit").style.display="none";
 }
-
-function cancelEditing() {
-  resetForm();
-  $("applicationMessage").textContent = "Editing cancelled.";
-}
-
+function cancelEditing(){resetForm();$("applicationMessage").textContent="Editing cancelled.";}
 function editApplication(id) {
-  const app = applications.find(item => item.id === id);
-  if (!app) return;
-
-  editingId = id;
-
-  $("company_name").value = app.company_name || "";
-  $("job_title").value = app.job_title || "";
-  $("vacancy_reference").value = app.vacancy_reference || "";
-  $("circular_number").value = app.circular_number || "";
-  $("job_description").value = app.job_description || "";
-  $("date_applied").value = app.date_applied || "";
-  $("closing_date").value = app.closing_date || "";
-  $("interview_date").value = app.interview_date || "";
-  $("follow_up_date").value = app.follow_up_date || "";
-  $("status").value = app.status || "Applied";
-  $("notes").value = app.notes || "";
-
-  $("formHeading").textContent = "✏️ Edit Application";
-  $("saveButton").textContent = "Update Application";
-  $("cancelEdit").style.display = "inline-block";
-
-  $("applicationMessage").textContent =
-    "You are editing: " + app.job_title;
-
-  $("formPanel").scrollIntoView({ behavior: "smooth" });
+  const app=applications.find(item=>item.id===id);if(!app)return;editingId=id;
+  $("company_name").value=app.company_name||"";$("job_title").value=app.job_title||"";
+  $("vacancy_reference").value=app.vacancy_reference||"";$("circular_number").value=app.circular_number||"";
+  $("job_description").value=app.job_description||"";$("date_applied").value=app.date_applied||"";
+  $("closing_date").value=app.closing_date||"";$("interview_date").value=app.interview_date||"";
+  $("follow_up_date").value=app.follow_up_date||"";$("status").value=app.status||"Applied";$("notes").value=app.notes||"";
+  $("formHeading").textContent="✏️ Edit Application";$("saveButton").textContent="Update Application";
+  $("cancelEdit").style.display="inline-block";$("applicationMessage").textContent="You are editing: "+app.job_title;
+  $("formPanel").scrollIntoView({behavior:"smooth"});
 }
-
 async function deleteApplication(id) {
-  const app = applications.find(item => item.id === id);
-  if (!app) return;
-
-  if (!confirm("Delete this application: " + app.job_title + "?")) {
-    return;
-  }
-
+  const app=applications.find(item=>item.id===id);if(!app)return;
+  if(!confirm("Delete this application: "+app.job_title+"?"))return;
   try {
-    const user = await getCurrentUser();
-
-    const { error } = await supabaseClient
-      .from("applications")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user.id);
-
-    if (error) throw error;
-
-    $("applicationMessage").textContent =
-      "Application deleted.";
-
-    await loadApplications();
-
-  } catch (error) {
-    $("applicationMessage").textContent =
-      "Error: " + error.message;
-  }
+    const user=await getCurrentUser();
+    const {error}=await supabaseClient.from("applications").delete().eq("id",id).eq("user_id",user.id);
+    if(error)throw error;$("applicationMessage").textContent="Application deleted.";await loadApplications();
+  } catch(error){$("applicationMessage").textContent="Error: "+error.message;}
 }
-
 async function loadApplications() {
-  const list = $("applicationsList");
-  list.textContent = "Loading applications...";
-
+  const list=$("applicationsList");list.textContent="Loading applications...";
   try {
-    const user = await getCurrentUser();
-
-    const { data, error } = await supabaseClient
-      .from("applications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    applications = data || [];
-    updateStats();
-    renderApplications();
-
-  } catch (error) {
-    list.textContent =
-      "Unable to load applications: " + error.message;
-  }
+    const user=await getCurrentUser();
+    const {data,error}=await supabaseClient.from("applications").select("*").eq("user_id",user.id).order("created_at",{ascending:false});
+    if(error)throw error;applications=data||[];updateStats();renderApplications();
+  } catch(error){list.textContent="Unable to load applications: "+error.message;}
 }
-
 function updateStats() {
-  $("totalCount").textContent = applications.length;
-
-  $("appliedCount").textContent =
-    applications.filter(a => a.status === "Applied").length;
-
-  $("shortlistedCount").textContent =
-    applications.filter(a => a.status === "Shortlisted").length;
-
-  $("interviewCount").textContent =
-    applications.filter(a => a.status === "Interview").length;
-
-  $("offeredCount").textContent =
-    applications.filter(a => a.status === "Offered").length;
+  $("totalCount").textContent=applications.length;
+  $("appliedCount").textContent=applications.filter(a=>a.status==="Applied").length;
+  $("shortlistedCount").textContent=applications.filter(a=>a.status==="Shortlisted").length;
+  $("interviewCount").textContent=applications.filter(a=>a.status==="Interview").length;
+  $("offeredCount").textContent=applications.filter(a=>a.status==="Offered").length;
 }
-
 function closingMessage(date) {
-  if (!date) return "Closing date not provided";
-
-  const parts = date.split("-").map(Number);
-  const closing = Date.UTC(parts[0], parts[1] - 1, parts[2]);
-  const todayDate = new Date();
-  const today = Date.UTC(
-    todayDate.getFullYear(),
-    todayDate.getMonth(),
-    todayDate.getDate()
-  );
-
-  const days = Math.round((closing - today) / 86400000);
-
-  if (days < 0) {
-    return {
-      text: "Closed " + Math.abs(days) + " day(s) ago",
-      className: "closed"
-    };
-  }
-
-  if (days === 0) {
-    return { text: "Closes today!", className: "today" };
-  }
-
-  return {
-    text: days + " day(s) remaining",
-    className: ""
-  };
+  if(!date)return "Closing date not provided";
+  const parts=date.split("-").map(Number),closing=Date.UTC(parts[0],parts[1]-1,parts[2]),now=new Date();
+  const today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()),days=Math.round((closing-today)/86400000);
+  if(days<0)return{text:"Closed "+Math.abs(days)+" day(s) ago",className:"closed"};
+  if(days===0)return{text:"Closes today!",className:"today"};
+  return{text:days+" day(s) remaining",className:""};
 }
-
-function addDetail(parent, label, value) {
-  const box = document.createElement("div");
-  box.className = "detail";
-
-  const small = document.createElement("small");
-  small.textContent = label;
-
-  const strong = document.createElement("strong");
-  strong.textContent = value || "Not provided";
-
-  box.append(small, strong);
-  parent.appendChild(box);
+function addDetail(parent,label,value) {
+  const box=document.createElement("div");box.className="detail";
+  const small=document.createElement("small");small.textContent=label;
+  const strong=document.createElement("strong");strong.textContent=value||"Not provided";
+  box.append(small,strong);parent.appendChild(box);
 }
-
 function renderApplications() {
-  const list = $("applicationsList");
-  const search = $("searchInput").value.toLowerCase().trim();
-
-  list.replaceChildren();
-
-  const filtered = applications.filter(app => {
-    const text = [
-      app.company_name,
-      app.job_title,
-      app.vacancy_reference,
-      app.circular_number
-    ].join(" ").toLowerCase();
-
-    return text.includes(search);
-  });
-
-  if (filtered.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = applications.length
-      ? "No matching applications found."
-      : "No applications saved yet. Add your first job application above.";
-
-    list.appendChild(empty);
-    return;
-  }
-
-  filtered.forEach(app => {
-    const card = document.createElement("article");
-    card.className = "application-card";
-
-    const top = document.createElement("div");
-    top.className = "card-top";
-
-    const headingArea = document.createElement("div");
-
-    const title = document.createElement("h3");
-    title.textContent = app.job_title;
-
-    const company = document.createElement("p");
-    company.className = "company";
-    company.textContent = app.company_name;
-
-    headingArea.append(title, company);
-
-    const badge = document.createElement("span");
-    badge.className = "badge " + app.status;
-    badge.textContent = app.status;
-
-    top.append(headingArea, badge);
-    card.appendChild(top);
-
-    const details = document.createElement("div");
-    details.className = "details";
-
-    addDetail(details, "Vacancy Reference", app.vacancy_reference);
-    addDetail(details, "Circular Number", app.circular_number);
-    addDetail(details, "Date Applied", app.date_applied);
-    addDetail(details, "Interview Date", app.interview_date);
-    addDetail(details, "Follow-up Date", app.follow_up_date);
-
-    const closingBox = document.createElement("div");
-    closingBox.className = "detail";
-
-    const closingLabel = document.createElement("small");
-    closingLabel.textContent = "Closing Date";
-
-    const closingValue = document.createElement("strong");
-    closingValue.textContent = app.closing_date || "Not provided";
-
-    const countdown = document.createElement("div");
-    const result = closingMessage(app.closing_date);
-
-    if (typeof result === "string") {
-      countdown.textContent = result;
-    } else {
-      countdown.textContent = result.text;
-      countdown.className = "countdown " + result.className;
-    }
-
-    closingBox.append(closingLabel, closingValue, countdown);
-    details.appendChild(closingBox);
-
-    card.appendChild(details);
-
-    const descriptionHeading = document.createElement("h4");
-    descriptionHeading.textContent = "Job Description";
-
-    const description = document.createElement("div");
-    description.className = "description";
-    description.textContent = app.job_description || "Not provided";
-
-    const notesHeading = document.createElement("h4");
-    notesHeading.textContent = "Notes";
-
-    const notes = document.createElement("p");
-    notes.textContent = app.notes || "No notes added.";
-
-    card.append(
-      descriptionHeading,
-      description,
-      notesHeading,
-      notes
-    );
-
-    const actions = document.createElement("div");
-    actions.className = "card-actions";
-
-    const edit = document.createElement("button");
-    edit.className = "btn secondary";
-    edit.textContent = "✏️ Edit";
-    edit.onclick = () => editApplication(app.id);
-
-    const remove = document.createElement("button");
-    remove.className = "btn danger";
-    remove.textContent = "🗑 Delete";
-    remove.onclick = () => deleteApplication(app.id);
-
-    actions.append(edit, remove);
-    card.appendChild(actions);
-
-    list.appendChild(card);
+  const list=$("applicationsList"),search=$("searchInput").value.toLowerCase().trim();list.replaceChildren();
+  const filtered=applications.filter(app=>[app.company_name,app.job_title,app.vacancy_reference,app.circular_number].join(" ").toLowerCase().includes(search));
+  if(filtered.length===0){const empty=document.createElement("div");empty.className="empty";empty.textContent=applications.length?"No matching applications found.":"No applications saved yet. Add your first job application above.";list.appendChild(empty);return;}
+  filtered.forEach(app=>{
+    const card=document.createElement("article");card.className="application-card";
+    const top=document.createElement("div");top.className="card-top";const headingArea=document.createElement("div");
+    const title=document.createElement("h3");title.textContent=app.job_title;
+    const company=document.createElement("p");company.className="company";company.textContent=app.company_name;headingArea.append(title,company);
+    const badge=document.createElement("span");badge.className="badge "+app.status;badge.textContent=app.status;top.append(headingArea,badge);card.appendChild(top);
+    const details=document.createElement("div");details.className="details";
+    addDetail(details,"Vacancy Reference",app.vacancy_reference);addDetail(details,"Circular Number",app.circular_number);
+    addDetail(details,"Date Applied",app.date_applied);addDetail(details,"Interview Date",app.interview_date);addDetail(details,"Follow-up Date",app.follow_up_date);
+    const closingBox=document.createElement("div");closingBox.className="detail";const closingLabel=document.createElement("small");closingLabel.textContent="Closing Date";
+    const closingValue=document.createElement("strong");closingValue.textContent=app.closing_date||"Not provided";
+    const countdown=document.createElement("div"),result=closingMessage(app.closing_date);
+    if(typeof result==="string")countdown.textContent=result;else{countdown.textContent=result.text;countdown.className="countdown "+result.className;}
+    closingBox.append(closingLabel,closingValue,countdown);details.appendChild(closingBox);card.appendChild(details);
+    const descriptionHeading=document.createElement("h4");descriptionHeading.textContent="Job Description";
+    const description=document.createElement("div");description.className="description";description.textContent=app.job_description||"Not provided";
+    const notesHeading=document.createElement("h4");notesHeading.textContent="Notes";
+    const notes=document.createElement("p");notes.textContent=app.notes||"No notes added.";
+    card.append(descriptionHeading,description,notesHeading,notes);
+    const actions=document.createElement("div");actions.className="card-actions";
+    const edit=document.createElement("button");edit.className="btn secondary";edit.textContent="✏️ Edit";edit.onclick=()=>editApplication(app.id);
+    const remove=document.createElement("button");remove.className="btn danger";remove.textContent="🗑 Delete";remove.onclick=()=>deleteApplication(app.id);
+    actions.append(edit,remove);card.appendChild(actions);list.appendChild(card);
   });
 }
-
-supabaseClient.auth.getSession().then(({ data, error }) => {
-  if (error) {
-    $("message").textContent = error.message;
-  } else if (data.session) {
-    showDashboard();
-  }
+supabaseClient.auth.getSession().then(({data,error})=>{
+  if(error){$("message").textContent=error.message;showHome();}
+  else if(data.session)showDashboard();
+  else showHome();
 });
 </script>
-
 </body>
 </html>
