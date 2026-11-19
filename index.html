@@ -1,331 +1,494 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Application Tracker</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: Arial, sans-serif;
-      background: #f1f5f9;
-      margin: 0;
-      padding: 24px 16px;
-      color: #172b4d;
-    }
-    .container {
-      max-width: 440px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 26px;
-      border-radius: 14px;
-      box-shadow: 0 3px 14px rgba(0,0,0,.10);
-    }
-    h1 { color: #173b68; margin-top: 0; }
-    input, button {
-      display: block;
-      width: 100%;
-      padding: 13px;
-      margin: 10px 0;
-      border-radius: 7px;
-      font-size: 16px;
-    }
-    input { border: 1px solid #b8c2cc; }
-    button {
-      background: #173b68;
-      color: #fff;
-      border: 0;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .6; }
-    #message { color: #a12622; overflow-wrap: anywhere; }
-    #dashboard { display: none; }
-    .hint { color: #536477; line-height: 1.5; }
-  </style>
-</head>
-<body>
-  <main class="container">
-    <h1>Application Tracker</h1>
-        <section id="auth">
-      <h2>Welcome</h2>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Tracker</title>
 
-      <label for="email">Email address</label>
-      <input type="email" id="email" autocomplete="email"
-             placeholder="you@example.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-      <label for="password">Password</label>
-      <input type="password" id="password"
-             autocomplete="current-password"
-             placeholder="At least 6 characters">
+<style>
+* { box-sizing: border-box; }
 
-      <button id="signupButton" type="button" onclick="signUp()">Create Account</button>
-      <button id="loginButton" type="button" onclick="logIn()">Log In</button>
-
-      <p id="message" role="status" aria-live="polite"></p>
-    </section>
-
-    <section id="dashboard">
-      <h2>My Job Applications</h2>
-      <p>Keep track of all your job applications in one place.</p>
-
-      <h3>Add New Application</h3>
-
-      <form id="applicationForm" onsubmit="saveApplication(event)">
-        <label>Company Name</label>
-        <input type="text" id="company_name" required>
-
-        <label>Job Title</label>
-        <input type="text" id="job_title" required>
-
-        <label>Vacancy Reference</label>
-        <input type="text" id="vacancy_reference">
-
-        <label>Date Applied</label>
-        <input type="date" id="date_applied">
-
-        <label>Closing Date</label>
-        <input type="date" id="closing_date">
-
-        <label>Application Status</label>
-        <select id="status" required>
-          <option value="Applied">Applied</option>
-          <option value="Shortlisted">Shortlisted</option>
-          <option value="Interview">Interview</option>
-          <option value="Rejected">Rejected</option>
-          <option value="Offered">Offered</option>
-        </select>
-
-        <label>Notes</label>
-        <textarea id="notes"></textarea>
-
-        <button type="submit">Save Application</button>
-      </form>
-
-      <p id="applicationMessage"></p>
-
-      <h3>My Saved Applications</h3>
-      <div id="applicationsList"></div>
-
-      <button type="button" onclick="logOut()">Log Out</button>
-    </section>
-<section id="dashboard">
-  <h2>My Job Applicati
-    <input type="date" id="closing_date">
-
-    <label>Application Status</label>
-    <select id="status" required>
-      <option value="Applied">Applied</option>
-      <option value="Shortlisted">Shortlisted</option>
-      <option value="Interview">Interview</option>
-      <option value="Rejected">Rejected</option>
-      <option value="Offered">Offered</option>
-    </select>
-
-    <label>Notes</label>
-    <textarea id="notes"></textarea>
-
-    <button type="submit">Save Application</button>
-  </form>
-
-  <p id="applicationMessage"></p>
-
-  <h3>My Saved Applications</h3>
-  <div id="applicationsList"></div>
-
-  <button type="button" onclick="logOut()">Log Out</button>
-</section>
-    
-  </main>
-
-  <script>
-    // Replace BOTH placeholders below with your Supabase Project URL
-    // and Supabase Publishable key. Never use a Secret/Service Role key here.
-    const SUPABASE_URL = "https://immcicsxrfpgfbtkwacc.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_lgh1qa3QVGF4k9MTFL8gYA_ob_Gx182";
-
-    let supabaseClient = null;
-    const message = document.getElementById("message");
-    const authSection = document.getElementById("auth");
-    const dashboardSection = document.getElementById("dashboard");
-
-    function showDashboard() {
-  authSection.style.display = "none";
-  dashboardSection.style.display = "block";
-  loadApplications();
-    }
-
-    function showLogin() {
-      authSection.style.display = "block";
-      dashboardSection.style.display = "none";
-    }
-
-    function setBusy(busy) {
-      document.getElementById("signupButton").disabled = busy;
-      document.getElementById("loginButton").disabled = busy;
-    }
-
-    async function signUp() {
-      message.textContent = "";
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!email || !password) {
-        message.textContent = "Please enter your email address and password.";
-        return;
-      }
-      if (password.length < 6) {
-        message.textContent = "Your password must be at least 6 characters.";
-        return;
-      }
-
-      setBusy(true);
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
-      setBusy(false);
-
-      if (error) {
-        message.textContent = error.message;
-      } else if (data.session) {
-        showDashboard();
-      } else {
-        message.textContent = "Account created. Check your email for a confirmation link, then log in.";
-      }
-    }
-
-    async function logIn() {
-      message.textContent = "";
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!email || !password) {
-        message.textContent = "Please enter your email address and password.";
-        return;
-      }
-
-      setBusy(true);
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      setBusy(false);
-
-      if (error) {
-        message.textContent = error.message;
-      } else {
-        showDashboard();
-      }
-    }
-
-    async function logOut() {
-      const { error } = await supabaseClient.auth.signOut();
-      if (error) {
-        message.textContent = error.message;
-      } else {
-        message.textContent = "You have logged out.";
-        showLogin();
-      }
-    }
-
-    if (
-      SUPABASE_URL.includes("PASTE_YOUR") ||
-      SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR")
-    ) {
-      message.textContent = "Setup needed: add your Supabase Project URL and Publishable key in this file.";
-    } else {
-      supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-      );
-
-      supabaseClient.auth.getSession().then(({ data, error }) => {
-        if (error) {
-          message.textContent = error.message;
-        } else if (data.session) {
-          showDashboard();
-        }
-      });
-
-    }
-    async function saveApplication(event) {
-  event.preventDefault();
-
-  const { data: { user }, error: userError } =
-    await supabaseClient.auth.getUser();
-
-  if (userError || !user) {
-    document.getElementById("applicationMessage").textContent =
-      "Please log in again.";
-    return;
-  }
-
-  const application = {
-    user_id: user.id,
-    company_name: document.getElementById("company_name").value,
-    job_title: document.getElementById("job_title").value,
-    vacancy_reference: document.getElementById("vacancy_reference").value || null,
-    date_applied: document.getElementById("date_applied").value || null,
-    closing_date: document.getElementById("closing_date").value || null,
-    status: document.getElementById("status").value,
-    notes: document.getElementById("notes").value || null
-  };
-
-  const { error } = await supabaseClient
-    .from("applications")
-    .insert([application]);
-
-  if (error) {
-    document.getElementById("applicationMessage").textContent =
-      error.message;
-    return;
-  }
-
-  document.getElementById("applicationMessage").textContent =
-    "Application saved successfully!";
-
-  document.getElementById("applicationForm").reset();
-
-  loadApplications();
+body {
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  margin: 0;
+  padding: 24px 16px;
+  color: #172b4d;
 }
+
+.container {
+  max-width: 500px;
+  margin: 40px auto;
+  background: white;
+  padding: 26px;
+  border-radius: 14px;
+  box-shadow: 0 3px 14px rgba(0,0,0,.10);
+}
+
+h1 { color: #173b68; }
+
+input, select, textarea, button {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  margin: 10px 0;
+  border-radius: 7px;
+  font-size: 16px;
+}
+
+input, select, textarea {
+  border: 1px solid #b8c2cc;
+  background: white;
+}
+
+textarea { min-height: 80px; }
+
+button {
+  background: #173b68;
+  color: white;
+  border: 0;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled { opacity: .6; }
+
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+#dashboard { display: none; }
+
+#message {
+  color: #a12622;
+  overflow-wrap: anywhere;
+}
+
+.application-card {
+  border: 1px solid #d5dce5;
+  padding: 14px;
+  margin: 12px 0;
+  border-radius: 8px;
+}
+
+.application-card h4 {
+  margin-top: 0;
+  color: #173b68;
+}
+</style>
+</head>
+
+<body>
+
+<main class="container">
+
+<h1>Application Tracker</h1>
+
+<section id="auth">
+
+<h2>Welcome</h2>
+
+<label for="email">Email address</label>
+<input type="email" id="email" autocomplete="email"
+placeholder="you@example.com">
+
+<label for="password">Password</label>
+<input type="password" id="password"
+autocomplete="current-password"
+placeholder="At least 6 characters">
+
+<button id="signupButton" type="button" onclick="signUp()">
+Create Account
+</button>
+
+<button id="loginButton" type="button" onclick="logIn()">
+Log In
+</button>
+
+<p id="message" role="status" aria-live="polite"></p>
+
+</section>
+
+
+<section id="dashboard">
+
+<h2>My Job Applications</h2>
+
+<p>Keep track of all your job applications in one place.</p>
+
+<h3>Add New Application</h3>
+
+<form id="applicationForm" onsubmit="saveApplication(event)">
+
+<label for="company_name">Company Name</label>
+<input type="text" id="company_name" required>
+
+<label for="job_title">Job Title</label>
+<input type="text" id="job_title" required>
+
+<label for="vacancy_reference">Vacancy Reference</label>
+<input type="text" id="vacancy_reference">
+
+<label for="date_applied">Date Applied</label>
+<input type="date" id="date_applied">
+
+<label for="closing_date">Closing Date</label>
+<input type="date" id="closing_date">
+
+<label for="status">Application Status</label>
+
+<select id="status" required>
+<option value="Applied">Applied</option>
+<option value="Shortlisted">Shortlisted</option>
+<option value="Interview">Interview</option>
+<option value="Rejected">Rejected</option>
+<option value="Offered">Offered</option>
+</select>
+
+<label for="notes">Notes</label>
+<textarea id="notes"></textarea>
+
+<button type="submit">Save Application</button>
+
+</form>
+
+<p id="applicationMessage"></p>
+
+<h3>My Saved Applications</h3>
+
+<div id="applicationsList">No applications saved yet.</div>
+
+<button type="button" onclick="logOut()">Log Out</button>
+
+</section>
+
+</main>
+
+
+<script>
+
+// SUPABASE CONNECTION
+
+const SUPABASE_URL =
+"https://immcicsxrfpgfbtkwacc.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+"sb_publishable_lgh1qa3QVGF4k9MTFL8gYA_ob_Gx182";
+
+const supabaseClient = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_PUBLISHABLE_KEY
+);
+
+const message = document.getElementById("message");
+
+const authSection = document.getElementById("auth");
+
+const dashboardSection =
+document.getElementById("dashboard");
+
+
+// SHOW DASHBOARD
+
+function showDashboard() {
+authSection.style.display = "none";
+dashboardSection.style.display = "block";
+loadApplications();
+}
+
+
+// SHOW LOGIN
+
+function showLogin() {
+authSection.style.display = "block";
+dashboardSection.style.display = "none";
+}
+
+
+// BUTTON LOADING
+
+function setBusy(busy) {
+document.getElementById("signupButton").disabled = busy;
+document.getElementById("loginButton").disabled = busy;
+}
+
+
+// CREATE ACCOUNT
+
+async function signUp() {
+
+message.textContent = "";
+
+const email = document.getElementById("email").value.trim();
+const password = document.getElementById("password").value;
+
+if (!email || !password) {
+message.textContent = "Please enter your email address and password.";
+return;
+}
+
+if (password.length < 6) {
+message.textContent = "Your password must be at least 6 characters.";
+return;
+}
+
+setBusy(true);
+
+try {
+
+const { data, error } = await supabaseClient.auth.signUp({
+email,
+password
+});
+
+if (error) throw error;
+
+if (data.session) {
+showDashboard();
+} else {
+message.textContent =
+"Account created. Check your email for confirmation, then log in.";
+}
+
+} catch (error) {
+message.textContent = error.message;
+} finally {
+setBusy(false);
+}
+
+}
+
+
+// LOG IN
+
+async function logIn() {
+
+message.textContent = "";
+
+const email = document.getElementById("email").value.trim();
+const password = document.getElementById("password").value;
+
+if (!email || !password) {
+message.textContent = "Please enter your email address and password.";
+return;
+}
+
+setBusy(true);
+
+try {
+
+const { error } = await supabaseClient.auth.signInWithPassword({
+email,
+password
+});
+
+if (error) throw error;
+
+showDashboard();
+
+} catch (error) {
+message.textContent = error.message;
+} finally {
+setBusy(false);
+}
+
+}
+
+
+// LOG OUT
+
+async function logOut() {
+
+const { error } = await supabaseClient.auth.signOut();
+
+if (error) {
+document.getElementById("applicationMessage").textContent =
+error.message;
+return;
+}
+
+message.textContent = "You have logged out.";
+showLogin();
+
+}
+
+
+// SAVE APPLICATION
+
+async function saveApplication(event) {
+
+event.preventDefault();
+
+const applicationMessage =
+document.getElementById("applicationMessage");
+
+applicationMessage.textContent = "";
+
+try {
+
+const {
+data: { user },
+error: userError
+} = await supabaseClient.auth.getUser();
+
+if (userError) throw userError;
+
+if (!user) {
+throw new Error("Please log in again.");
+}
+
+const application = {
+
+user_id: user.id,
+
+company_name:
+document.getElementById("company_name").value.trim(),
+
+job_title:
+document.getElementById("job_title").value.trim(),
+
+vacancy_reference:
+document.getElementById("vacancy_reference").value || null,
+
+date_applied:
+document.getElementById("date_applied").value || null,
+
+closing_date:
+document.getElementById("closing_date").value || null,
+
+status:
+document.getElementById("status").value,
+
+notes:
+document.getElementById("notes").value || null
+
+};
+
+const { error } = await supabaseClient
+.from("applications")
+.insert([application]);
+
+if (error) throw error;
+
+applicationMessage.textContent =
+"Application saved successfully!";
+
+document.getElementById("applicationForm").reset();
+
+await loadApplications();
+
+} catch (error) {
+applicationMessage.textContent = error.message;
+}
+
+}
+
+
+// LOAD APPLICATIONS
 
 async function loadApplications() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
 
-  if (!user) return;
+const list = document.getElementById("applicationsList");
 
-  const { data, error } = await supabaseClient
-    .from("applications")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+list.textContent = "Loading applications...";
 
-  const list = document.getElementById("applicationsList");
-  list.replaceChildren();
+try {
 
-  if (error) {
-    list.textContent = error.message;
-    return;
-  }
+const {
+data: { user },
+error: userError
+} = await supabaseClient.auth.getUser();
 
-  if (!data.length) {
-    list.textContent = "No applications saved yet.";
-    return;
-  }
+if (userError) throw userError;
 
-  data.forEach(app => {
-    const card = document.createElement("div");
-    const title = document.createElement("h4");
-    const company = document.createElement("p");
-    const status = document.createElement("p");
-    const closing = document.createElement("p");
-
-    title.textContent = app.job_title;
-    company.textContent = "Company: " + app.company_name;
-    status.textContent = "Status: " + app.status;
-    closing.textContent = "Closing date: " + (app.closing_date || "Not provided");
-
-    card.append(title, company, status, closing);
-    list.appendChild(card);
-  });
+if (!user) {
+list.textContent = "Please log in.";
+return;
 }
-  </script>
+
+const { data, error } = await supabaseClient
+.from("applications")
+.select("*")
+.eq("user_id", user.id)
+.order("created_at", { ascending: false });
+
+if (error) throw error;
+
+list.replaceChildren();
+
+if (!data.length) {
+list.textContent = "No applications saved yet.";
+return;
+}
+
+data.forEach(app => {
+
+const card = document.createElement("div");
+card.className = "application-card";
+
+const title = document.createElement("h4");
+const company = document.createElement("p");
+const reference = document.createElement("p");
+const dateApplied = document.createElement("p");
+const status = document.createElement("p");
+const closing = document.createElement("p");
+const notes = document.createElement("p");
+
+title.textContent = app.job_title;
+
+company.textContent = "Company: " + app.company_name;
+
+reference.textContent =
+"Reference: " + (app.vacancy_reference || "Not provided");
+
+dateApplied.textContent =
+"Date applied: " + (app.date_applied || "Not provided");
+
+status.textContent = "Status: " + app.status;
+
+closing.textContent =
+"Closing date: " + (app.closing_date || "Not provided");
+
+notes.textContent = "Notes: " + (app.notes || "None");
+
+card.append(
+title,
+company,
+reference,
+dateApplied,
+status,
+closing,
+notes
+);
+
+list.appendChild(card);
+
+});
+
+} catch (error) {
+list.textContent = error.message;
+}
+
+}
+
+
+// CHECK EXISTING SESSION
+
+supabaseClient.auth.getSession().then(({ data, error }) => {
+
+if (error) {
+message.textContent = error.message;
+} else if (data.session) {
+showDashboard();
+}
+
+});
+
+</script>
+
 </body>
 </html>
