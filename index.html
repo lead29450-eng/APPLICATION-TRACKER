@@ -375,7 +375,294 @@ supabaseClient.auth.getSession().then(({data,error})=>{
   if(error){$("message").textContent=error.message;showHome();}
   else if(data.session)showDashboard();
   else showHome();
-});
+});// APPLICATION TRACKER - VACANCIES FEATURE
+
+let vacancyIsAdmin = false;
+
+function setupVacancyBoard() {
+  const home = document.getElementById("publicHome");
+  if (!home || document.getElementById("vacancyBoard")) return;
+
+  const board = document.createElement("section");
+  board.id = "vacancyBoard";
+  board.className = "public-wrap section";
+
+  board.innerHTML = `
+    <h2>🇿🇦 South African Job Vacancies</h2>
+    <p class="section-intro">
+      Browse published opportunities and apply through official employer links.
+    </p>
+    <input id="vacancySearch" class="search"
+      placeholder="Search job title, employer or province...">
+    <div id="publicVacancies">
+      <p class="empty">Loading vacancies...</p>
+    </div>
+  `;
+
+  home.appendChild(board);
+
+  const nav = document.getElementById("publicNav");
+  if (nav) {
+    const link = document.createElement("a");
+    link.href = "#vacancyBoard";
+    link.textContent = "Vacancies";
+    nav.insertBefore(link, nav.firstChild);
+  }
+
+  document.getElementById("vacancySearch").addEventListener(
+    "input", loadPublicVacancies
+  );
+
+  loadPublicVacancies();
+}
+
+async function loadPublicVacancies() {
+  const box = document.getElementById("publicVacancies");
+  if (!box) return;
+
+  const search = (
+    document.getElementById("vacancySearch")?.value || ""
+  ).toLowerCase();
+
+  const { data, error } = await supabaseClient
+    .from("vacancies")
+    .select("*")
+    .eq("status", "published")
+    .order("closing_date", { ascending: true });
+
+  if (error) {
+    box.textContent = "Unable to load vacancies. Please try again.";
+    return;
+  }
+
+  const results = (data || []).filter(v =>
+    [v.title, v.employer, v.province, v.category]
+      .join(" ").toLowerCase().includes(search)
+  );
+
+  box.innerHTML = "";
+
+  if (!results.length) {
+    box.innerHTML = '<p class="empty">No published vacancies found yet.</p>';
+    return;
+  }
+
+  results.forEach(v => {
+    const card = document.createElement("article");
+    card.className = "application-card";
+
+    const title = document.createElement("h3");
+    title.textContent = v.title;
+
+    const employer = document.createElement("p");
+    employer.textContent = v.employer;
+
+    const details = document.createElement("p");
+    details.textContent =
+      `${v.province || "Province not specified"} | ${v.category} | Closing: ${v.closing_date || "Not specified"}`;
+
+    const description = document.createElement("p");
+    description.textContent = v.description || "";
+
+    const apply = document.createElement("a");
+    apply.className = "btn primary";
+    apply.textContent = "View / Apply";
+    apply.href = v.application_url;
+    apply.target = "_blank";
+    apply.rel = "noopener noreferrer";
+
+    card.append(title, employer, details, description, apply);
+    box.appendChild(card);
+  });
+}
+
+async function checkVacancyAdmin() {
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  const user = sessionData.session?.user;
+  if (!user) return;
+
+  const { data, error } = await supabaseClient
+    .from("vacancy_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error || !data) return;
+
+  vacancyIsAdmin = true;
+  createVacancyAdminPanel();
+}
+
+function createVacancyAdminPanel() {
+  if (!vacancyIsAdmin || document.getElementById("vacancyAdminPanel")) return;
+
+  const dashboard = document.querySelector("#dashboard .container");
+  if (!dashboard) return;
+
+  const panel = document.createElement("section");
+  panel.id = "vacancyAdminPanel";
+  panel.className = "panel";
+
+  panel.innerHTML = `
+    <h2>Vacancy Management - Administrator</h2>
+    <p>Add vacancies below. Check all details before publishing.</p>
+
+    <form id="vacancyForm">
+      <label>Job Title *</label>
+      <input id="vTitle" required>
+
+      <label>Employer *</label>
+      <input id="vEmployer" required>
+
+      <label>Department</label>
+      <input id="vDepartment">
+
+      <label>Category *</label>
+      <input id="vCategory" placeholder="Administration, Health, Security..." required>
+
+      <label>Province</label>
+      <input id="vProvince">
+
+      <label>Closing Date</label>
+      <input type="date" id="vClosing">
+
+      <label>Reference Number</label>
+      <input id="vReference">
+
+      <label>Job Description</label>
+      <textarea id="vDescription"></textarea>
+
+      <label>Requirements</label>
+      <textarea id="vRequirements"></textarea>
+
+      <label>Official Application Link *</label>
+      <input type="url" id="vApplication" required>
+
+      <label>Original Vacancy Source Link</label>
+      <input type="url" id="vSource">
+
+      <button class="btn primary" type="submit">Save as Draft</button>
+    </form>
+
+    <p id="vacancyAdminMessage" role="status"></p>
+    <h3>Manage Vacancies</h3>
+    <div id="adminVacancyList">Loading...</div>
+  `;
+
+  dashboard.appendChild(panel);
+
+  document.getElementById("vacancyForm").addEventListener(
+    "submit", saveVacancy
+  );
+
+  loadAdminVacancies();
+}
+
+async function saveVacancy(event) {
+  event.preventDefault();
+
+  const vacancy = {
+    title: document.getElementById("vTitle").value.trim(),
+    employer: document.getElementById("vEmployer").value.trim(),
+    department: document.getElementById("vDepartment").value.trim(),
+    category: document.getElementById("vCategory").value.trim(),
+    province: document.getElementById("vProvince").value.trim(),
+    closing_date: document.getElementById("vClosing").value || null,
+    reference_number: document.getElementById("vReference").value.trim(),
+    description: document.getElementById("vDescription").value.trim(),
+    requirements: document.getElementById("vRequirements").value.trim(),
+    application_url: document.getElementById("vApplication").value.trim(),
+    source_url: document.getElementById("vSource").value.trim(),
+    status: "draft"
+  };
+
+  const message = document.getElementById("vacancyAdminMessage");
+  const { error } = await supabaseClient
+    .from("vacancies")
+    .insert(vacancy);
+
+  if (error) {
+    message.textContent = "Error: " + error.message;
+    return;
+  }
+
+  message.textContent = "Vacancy saved as draft successfully.";
+  document.getElementById("vacancyForm").reset();
+  loadAdminVacancies();
+}
+
+async function loadAdminVacancies() {
+  const box = document.getElementById("adminVacancyList");
+  if (!box) return;
+
+  const { data, error } = await supabaseClient
+    .from("vacancies")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    box.textContent = "Unable to load vacancies: " + error.message;
+    return;
+  }
+
+  box.innerHTML = "";
+
+  if (!data.length) {
+    box.textContent = "No vacancies added yet.";
+    return;
+  }
+
+  data.forEach(v => {
+    const card = document.createElement("article");
+    card.className = "application-card";
+
+    const heading = document.createElement("h3");
+    heading.textContent = v.title + " - " + v.employer;
+
+    const status = document.createElement("p");
+    status.textContent = "Status: " + v.status;
+
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
+
+    const publish = document.createElement("button");
+    publish.className = "btn primary";
+    publish.textContent = "Publish";
+    publish.onclick = () => updateVacancyStatus(v.id, "published");
+
+    const archive = document.createElement("button");
+    archive.className = "btn secondary";
+    archive.textContent = "Archive";
+    archive.onclick = () => updateVacancyStatus(v.id, "archived");
+
+    actions.append(publish, archive);
+    card.append(heading, status, actions);
+    box.appendChild(card);
+  });
+}
+
+async function updateVacancyStatus(id, status) {
+  const { error } = await supabaseClient
+    .from("vacancies")
+    .update({
+      status,
+      published_at: status === "published"
+        ? new Date().toISOString()
+        : null
+    })
+    .eq("id", id);
+
+  if (error) {
+    alert("Update failed: " + error.message);
+    return;
+  }
+
+  loadAdminVacancies();
+  loadPublicVacancies();
+}
+
+setupVacancyBoard();
+checkVacancyAdmin();
 </script>
 </body>
 </html>
